@@ -37,7 +37,7 @@
     // =========================================================================
     // 🔴 1. วาง URL ของ GOOGLE APPS SCRIPT ของคุณตรงนี้ 🔴
     // =========================================================================
-    const YOUR_GAS_URL = ""; 
+    const YOUR_GAS_URL = "https://script.google.com/macros/s/AKfycbyLsmvfZhwVf-6v7C-2KziMZU8ZklXdLOxVJAwc7AqH3G3ec5o3NxgLepzdIkPsXseZ2g/exec"; 
 
     // --- ข้อมูลแม่แบบ (ใช้สร้างฐานข้อมูลอัตโนมัติเมื่อรันครั้งแรก) ---
     const initData = {
@@ -131,16 +131,16 @@
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <div className="relative"><input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required /><Lock className="absolute left-3 top-3.5 text-gray-400" size={18} /></div>
               </div>
-              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-md">เข้าสู่ระบบ</button>
+              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-md">เข้าสู่ระบบ</button>
             </form>
           </div>
         </div>
       );
     };
 
-    // --- 4. COMPONENT: Dashboard ---
-    const DashboardComponent = ({ db, changeTab, currentUser, perms }) => {
-      const { prs, pos, products } = db;
+    // --- 4. COMPONENT: Dashboard (แก้ไขชื่อให้ตรงกับการเรียกใช้) ---
+    const Dashboard = ({ db, changeTab, currentUser, perms }) => {
+      const { prs, pos, products, transactions } = db;
       const lowStock = products.filter(p => p.stock <= p.minStock).length;
       return (
         <div className="space-y-6">
@@ -154,28 +154,27 @@
                     <><button onClick={()=>changeTab('gr')} className="bg-emerald-500/80 hover:bg-emerald-500 px-4 py-2.5 rounded-lg font-medium flex items-center"><PackagePlus size={18} className="mr-2" /> รับเข้า</button>
                     <button onClick={()=>changeTab('issue')} className="bg-amber-500/80 hover:bg-amber-500 px-4 py-2.5 rounded-lg font-medium flex items-center"><PackageMinus size={18} className="mr-2" /> เบิกออก</button></>
                   )}
-                  {perms.canViewReports && <button onClick={()=>changeTab('reports')} className="bg-white/10 hover:bg-white/20 px-4 py-2.5 rounded-lg font-medium flex items-center"><PieChart size={18} className="mr-2" /> ดูรายงาน</button>}
                 </div>
              </div>
-             <Layers size={200} className="absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10 hidden md:block" />
+             <Layers size={200} className="absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer hover:shadow-md transition-shadow" onClick={()=>changeTab('pr')}>
-              <div className="p-3.5 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24}/></div>
-              <div><p className="text-sm text-gray-500 font-medium">PR รอดำเนินการ</p><p className="text-2xl font-black">{prs.filter(p=>p.status==='Pending').length}</p></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer" onClick={()=>changeTab('pr')}>
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24}/></div>
+              <div><p className="text-sm text-gray-500">PR รอดำเนินการ</p><p className="text-2xl font-black">{prs.filter(p=>p.status==='Pending').length}</p></div>
             </div>
-            {perms.canCreatePO && <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer hover:shadow-md transition-shadow" onClick={()=>changeTab('po')}>
-              <div className="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><ShoppingCart size={24}/></div>
-              <div><p className="text-sm text-gray-500 font-medium">PO รอรับของ</p><p className="text-2xl font-black">{pos.filter(p=>p.status==='Pending Receipt').length}</p></div>
+            {perms.canCreatePO && <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer" onClick={()=>changeTab('po')}>
+              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><ShoppingCart size={24}/></div>
+              <div><p className="text-sm text-gray-500">PO รอรับของ</p><p className="text-2xl font-black">{pos.filter(p=>p.status==='Pending Receipt').length}</p></div>
             </div>}
             {perms.canManageInventory && <>
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer hover:shadow-md transition-shadow" onClick={()=>changeTab('stock')}>
-                <div className="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><Layers size={24}/></div>
-                <div><p className="text-sm text-gray-500 font-medium">สินค้าในคลังทั้งหมด</p><p className="text-2xl font-black">{products.length}</p></div>
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer" onClick={()=>changeTab('stock')}>
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><Layers size={24}/></div>
+                <div><p className="text-sm text-gray-500">สินค้าในคลัง</p><p className="text-2xl font-black">{products.length}</p></div>
               </div>
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer hover:shadow-md transition-shadow" onClick={()=>changeTab('stock')}>
-                <div className="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><AlertTriangle size={24}/></div>
-                <div><p className="text-sm text-gray-500 font-medium">ใกล้หมด/หมดสต๊อก</p><p className="text-2xl font-black text-red-500">{lowStock}</p></div>
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer" onClick={()=>changeTab('stock')}>
+                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><AlertTriangle size={24}/></div>
+                <div><p className="text-sm text-gray-500">ใกล้หมด/หมด</p><p className="text-2xl font-black">{lowStock}</p></div>
               </div>
             </>}
           </div>
@@ -183,15 +182,12 @@
       );
     };
 
-    // --- 5. COMPONENT: PR (Purchase Request) ---
+    // --- 5. COMPONENT: PR ---
     const PRComponent = ({ db, updateDb, showNotify, showAlert, showConfirm, currentUser, perms }) => {
       const [view, setView] = useState('list');
-      const [searchTerm, setSearchTerm] = useState('');
       const [newPR, setNewPR] = useState({ requester: currentUser.name, items: [] });
+      const [itemInput, setItemInput] = useState({ productId: '', customName: '', qty: '', unit: 'ชิ้น', remark: '' });
       const [isCustom, setIsCustom] = useState(false);
-      const [itemInput, setItemInput] = useState({ productId: '', customName: '', qty: '', unit: 'ชิ้น', reqDate: '', jobNo: '', suggestVendor: '', remark: '' });
-
-      const filteredPRs = db.prs.filter(pr => pr.id.toLowerCase().includes(searchTerm.toLowerCase()) || pr.requester.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const handleCreatePR = () => {
         if (!newPR.items.length) return showAlert('ผิดพลาด', 'กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error');
@@ -203,84 +199,50 @@
       };
 
       const addItem = () => {
-        if ((!isCustom && !itemInput.productId) || (isCustom && !itemInput.customName) || !itemInput.qty) return showAlert('ผิดพลาด', 'กรอกข้อมูลสินค้าและจำนวนให้ครบ', 'error');
+        if ((!isCustom && !itemInput.productId) || (isCustom && !itemInput.customName) || !itemInput.qty) return showAlert('ผิดพลาด', 'กรอกข้อมูลไม่ครบ', 'error');
         setNewPR({...newPR, items: [...newPR.items, { ...itemInput, isCustom, qty: parseInt(itemInput.qty) }]});
-        setItemInput({ productId: '', customName: '', qty: '', unit: 'ชิ้น', reqDate: '', jobNo: '', suggestVendor: '', remark: '' });
+        setItemInput({ productId: '', customName: '', qty: '', unit: 'ชิ้น', remark: '' });
       };
 
       if (view === 'create') {
         return (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 max-w-5xl">
-            <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-black">สร้างใบขอซื้อ (PR)</h2><button onClick={()=>setView('list')} className="text-gray-500 hover:bg-gray-100 px-4 py-2 rounded-lg font-bold">กลับ</button></div>
-            <div className="space-y-6">
-              <div><label className="block text-sm font-bold mb-1">ผู้ขอซื้อ</label><input type="text" className="w-full border rounded-xl p-3 bg-gray-50 font-bold text-gray-500" value={newPR.requester} disabled /></div>
-              
-              <div className="border border-blue-200 rounded-xl p-6 bg-blue-50/30">
-                <div className="flex flex-col md:flex-row justify-between mb-4 border-b border-blue-100 pb-2"><h3 className="font-bold text-blue-800">เพิ่มรายการสินค้า</h3><label className="flex items-center text-sm font-bold text-blue-700 cursor-pointer mt-2 md:mt-0"><input type="checkbox" checked={isCustom} onChange={e=>setIsCustom(e.target.checked)} className="mr-2 w-4 h-4"/> พิมพ์ชื่อเอง (สินค้านอกระบบ)</label></div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                  <div className="md:col-span-3">
-                    {!isCustom ? <select className="w-full border rounded-lg p-3 bg-white" value={itemInput.productId} onChange={e=>setItemInput({...itemInput, productId: e.target.value})}><option value="">-- เลือกรหัสสินค้าในระบบ --</option>{db.products.map(p=><option key={p.id} value={p.id}>[{p.id}] {p.name}</option>)}</select> : <input type="text" className="w-full border rounded-lg p-3" placeholder="พิมพ์ชื่อสินค้า หรือ งานบริการ..." value={itemInput.customName} onChange={e=>setItemInput({...itemInput, customName: e.target.value})} />}
-                  </div>
-                  <div className="flex gap-2">
-                    <input type="number" className="w-full border rounded-lg p-3" placeholder="จำนวน *" value={itemInput.qty} onChange={e=>setItemInput({...itemInput, qty: e.target.value})} />
-                    {isCustom && <input type="text" className="w-24 border rounded-lg p-3" placeholder="หน่วย" value={itemInput.unit} onChange={e=>setItemInput({...itemInput, unit: e.target.value})} />}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                  <div><input type="date" className="w-full border rounded-lg p-3 text-sm text-gray-600" value={itemInput.reqDate} onChange={e=>setItemInput({...itemInput, reqDate: e.target.value})} title="วันที่ต้องการ"/></div>
-                  <div><input type="text" className="w-full border rounded-lg p-3 text-sm" placeholder="JOB# (รหัสงาน)" value={itemInput.jobNo} onChange={e=>setItemInput({...itemInput, jobNo: e.target.value})} /></div>
-                  <div><input type="text" className="w-full border rounded-lg p-3 text-sm" placeholder="Suggest Vendor" value={itemInput.suggestVendor} onChange={e=>setItemInput({...itemInput, suggestVendor: e.target.value})} /></div>
-                  <div><input type="text" className="w-full border rounded-lg p-3 text-sm" placeholder="หมายเหตุ / สเปค" value={itemInput.remark} onChange={e=>setItemInput({...itemInput, remark: e.target.value})} /></div>
-                </div>
-                <div className="flex justify-end"><button onClick={addItem} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-md"><Plus size={18} className="inline mr-1"/> เพิ่มลงตะกร้า</button></div>
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex justify-between mb-4"><h2 className="text-xl font-bold">สร้างใบขอซื้อ (PR)</h2><button onClick={()=>setView('list')} className="text-gray-500">กลับ</button></div>
+            <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-xl mb-4">
+              <div className="flex justify-between mb-2"><h3 className="font-bold">เพิ่มสินค้า</h3><label><input type="checkbox" checked={isCustom} onChange={e=>setIsCustom(e.target.checked)} className="mr-1"/> พิมพ์นอกระบบ</label></div>
+              <div className="flex gap-2">
+                {!isCustom ? <select className="flex-1 p-2 border rounded" value={itemInput.productId} onChange={e=>setItemInput({...itemInput, productId: e.target.value})}><option value="">- เลือก -</option>{db.products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select> : <input type="text" className="flex-1 p-2 border rounded" placeholder="ชื่อสินค้า..." value={itemInput.customName} onChange={e=>setItemInput({...itemInput, customName: e.target.value})} />}
+                <input type="number" className="w-20 p-2 border rounded" placeholder="จำนวน" value={itemInput.qty} onChange={e=>setItemInput({...itemInput, qty: e.target.value})} />
+                <button onClick={addItem} className="bg-blue-600 text-white px-4 rounded">เพิ่ม</button>
               </div>
-
-              {newPR.items.length > 0 && (
-                <div className="border rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-100 border-b"><tr><th className="p-3">สินค้า</th><th className="p-3 text-right">จำนวน</th><th className="p-3">JOB/หมายเหตุ</th><th className="p-3 text-center">ลบ</th></tr></thead>
-                    <tbody className="divide-y">
-                      {newPR.items.map((it, i) => <tr key={i}>
-                        <td className="p-3 font-bold">{it.isCustom ? it.customName : db.products.find(p=>p.id===it.productId)?.name} {it.isCustom && <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded ml-2">นอกระบบ</span>}</td>
-                        <td className="p-3 text-right font-black text-lg">{it.qty} <span className="text-xs font-normal text-gray-500">{it.unit}</span></td>
-                        <td className="p-3 text-xs text-gray-600">{it.jobNo} {it.remark}</td>
-                        <td className="p-3 text-center"><button onClick={()=>setNewPR({...newPR, items: newPR.items.filter((_, idx)=>idx!==i)})} className="text-red-500 hover:bg-red-50 p-2 rounded-lg"><Trash2 size={16}/></button></td>
-                      </tr>)}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              <div className="text-right pt-6 border-t"><button onClick={handleCreatePR} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3.5 rounded-xl font-black text-lg shadow-lg w-full md:w-auto"><Check size={20} className="inline mr-2"/> ยืนยันบันทึกใบขอซื้อ</button></div>
             </div>
+            {newPR.items.length > 0 && (
+              <table className="w-full text-sm mb-4">
+                <thead className="bg-gray-100"><tr><th className="p-2">สินค้า</th><th className="p-2 text-right">จำนวน</th><th className="p-2 text-center">ลบ</th></tr></thead>
+                <tbody>{newPR.items.map((it, i) => <tr key={i} className="border-b"><td className="p-2">{it.isCustom ? it.customName : db.products.find(p=>p.id===it.productId)?.name}</td><td className="p-2 text-right">{it.qty}</td><td className="p-2 text-center text-red-500 cursor-pointer" onClick={()=>setNewPR({...newPR, items: newPR.items.filter((_, idx)=>idx!==i)})}>X</td></tr>)}</tbody>
+              </table>
+            )}
+            <button onClick={handleCreatePR} className="bg-emerald-500 text-white w-full p-3 rounded-lg font-bold">บันทึก PR</button>
           </div>
         );
       }
 
       return (
-        <div className="space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <h2 className="text-2xl font-bold">ใบขอซื้อ (PR)</h2>
-            <div className="flex w-full md:w-auto gap-2">
-              <div className="relative flex-1 md:w-64"><input type="text" placeholder="ค้นหาเลขที่ PR..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" /><Search className="absolute left-3 top-3 text-gray-400" size={18}/></div>
-              {perms.canCreatePR && <button onClick={()=>setView('create')} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md whitespace-nowrap"><Plus size={18} className="inline mr-1"/> สร้าง PR</button>}
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
-              <thead className="bg-gray-50 border-b text-sm text-gray-600"><tr><th className="p-4">เลขที่ PR</th><th className="p-4">วันที่</th><th className="p-4">ผู้ขอซื้อ</th><th className="p-4">รายการ</th><th className="p-4 text-center">สถานะ</th>{perms.canApprovePR && <th className="p-4 text-center print:hidden">จัดการ</th>}</tr></thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredPRs.map(pr => (
-                  <tr key={pr.id} className="hover:bg-gray-50">
-                    <td className="p-4 font-bold text-blue-600">{pr.id}</td><td className="p-4 text-sm">{pr.date}</td><td className="p-4 font-bold">{pr.requester}</td><td className="p-4 text-sm">{pr.items.length} รายการ</td>
-                    <td className="p-4 text-center"><span className={`px-3 py-1.5 rounded-full text-xs font-bold inline-block w-24 ${pr.status==='Approved'?'bg-emerald-100 text-emerald-700':pr.status==='Rejected'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}`}>{pr.status==='Approved'?'อนุมัติแล้ว':pr.status==='Rejected'?'ไม่อนุมัติ':'รอพิจารณา'}</span></td>
-                    {perms.canApprovePR && <td className="p-4 text-center print:hidden">
-                      {pr.status === 'Pending' && <><button onClick={()=>showConfirm('อนุมัติ', 'ยืนยันอนุมัติ?', ()=>updateDb('prs', db.prs.map(p=>p.id===pr.id?{...p,status:'Approved'}:p)))} className="text-emerald-600 border border-emerald-500 px-3 py-1.5 rounded-lg text-xs mr-2 font-bold hover:bg-emerald-600 hover:text-white">อนุมัติ</button><button onClick={()=>showConfirm('ไม่อนุมัติ', 'ยืนยันปฏิเสธ?', ()=>updateDb('prs', db.prs.map(p=>p.id===pr.id?{...p,status:'Rejected'}:p)))} className="text-red-500 border border-red-500 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 hover:text-white">ไม่อนุมัติ</button></>}
-                      {pr.status === 'Approved' && perms.canCreatePO && <button onClick={()=>alert("ฟังก์ชันนี้ให้ไปเปิด PO ที่เมนูใบสั่งซื้อ")} className="text-blue-600 font-bold text-xs bg-blue-50 px-3 py-1.5 rounded-lg">พร้อมเปิด PO</button>}
-                      {(pr.status === 'Pending' || pr.status === 'Rejected') && <button onClick={()=>showConfirm('ลบเอกสาร', 'ยืนยันลบ PR นี้?', ()=>updateDb('prs', db.prs.filter(p=>p.id!==pr.id)))} className="text-gray-400 hover:text-red-500 ml-2"><Trash2 size={16}/></button>}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center"><h2 className="text-xl font-bold">ใบขอซื้อ (PR)</h2>{perms.canCreatePR && <button onClick={()=>setView('create')} className="bg-blue-600 text-white px-4 py-2 rounded-lg">+ สร้าง PR</button>}</div>
+          <div className="bg-white border rounded-xl overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50"><tr><th className="p-3">เลขที่</th><th className="p-3">ผู้ขอ</th><th className="p-3">สถานะ</th>{perms.canApprovePR && <th className="p-3">จัดการ</th>}</tr></thead>
+              <tbody>
+                {db.prs.map(pr => (
+                  <tr key={pr.id} className="border-t">
+                    <td className="p-3 font-bold">{pr.id}</td><td className="p-3">{pr.requester}</td>
+                    <td className="p-3"><span className={`px-2 py-1 rounded-full text-xs font-bold ${pr.status==='Approved'?'bg-emerald-100 text-emerald-700':pr.status==='Rejected'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}`}>{pr.status}</span></td>
+                    {perms.canApprovePR && <td className="p-3">
+                      {pr.status === 'Pending' && <><button onClick={()=>updateDb('prs', db.prs.map(p=>p.id===pr.id?{...p,status:'Approved'}:p))} className="text-emerald-600 mr-2">อนุมัติ</button><button onClick={()=>updateDb('prs', db.prs.map(p=>p.id===pr.id?{...p,status:'Rejected'}:p))} className="text-red-500">ปฏิเสธ</button></>}
                     </td>}
                   </tr>
                 ))}
-                {filteredPRs.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-500">ไม่พบเอกสาร</td></tr>}
               </tbody>
             </table>
           </div>
@@ -288,61 +250,37 @@
       );
     };
 
-    // --- 6. COMPONENT: PO (Purchase Order) ---
+    // --- 6. COMPONENT: PO ---
     const POComponent = ({ db, updateDb, showNotify, showAlert, showConfirm }) => {
-      const [view, setView] = useState('list');
-      const [searchTerm, setSearchTerm] = useState('');
       const [selectedPR, setSelectedPR] = useState('');
       const [selectedVendor, setSelectedVendor] = useState('');
-      
       const approvedPRs = db.prs.filter(pr => pr.status === 'Approved' && !db.pos.find(po => po.prId === pr.id));
-      const filteredPOs = db.pos.filter(po => po.id.toLowerCase().includes(searchTerm.toLowerCase()) || po.prId.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      const handleCreatePO = () => {
-        if (!selectedPR || !selectedVendor) return showAlert('ผิดพลาด', 'กรุณาเลือก PR และ ซัพพลายเออร์ ให้ครบ', 'error');
-        showConfirm('สร้าง PO', 'ยืนยันการออกใบสั่งซื้อ?', () => {
+      const createPO = () => {
+        if (!selectedPR || !selectedVendor) return showAlert('ผิดพลาด', 'เลือก PR และร้านค้า', 'error');
+        showConfirm('สร้าง PO', 'ยืนยันสร้างใบสั่งซื้อ?', () => {
           const pr = db.prs.find(p => p.id === selectedPR);
           const poId = `PO-${Date.now().toString().slice(-6)}`;
           const items = pr.items.map(it => ({ ...it, expectedQty: it.qty, receivedQty: 0, price: 0 }));
           updateDb('pos', [{ id: poId, prId: pr.id, vendorId: selectedVendor, date: new Date().toISOString().split('T')[0], status: 'Pending Receipt', items }, ...db.pos]);
-          setView('list'); showNotify('สร้างใบสั่งซื้อ (PO) สำเร็จ');
+          showNotify('สร้าง PO สำเร็จ'); setSelectedPR('');
         });
       };
 
-      if (view === 'create') {
-        return (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 max-w-4xl">
-            <div className="flex justify-between items-center mb-6 border-b pb-4"><h2 className="text-2xl font-black">สร้างใบสั่งซื้อ (PO)</h2><button onClick={() => setView('list')} className="text-gray-500 font-bold bg-gray-100 px-4 py-2 rounded-lg">กลับ</button></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
-              <div><label className="block text-sm font-bold text-indigo-900 mb-2">อ้างอิงใบขอซื้อ (PR)</label><select className="w-full border rounded-xl p-3 outline-none" value={selectedPR} onChange={e=>setSelectedPR(e.target.value)}><option value="">-- เลือกเอกสาร PR --</option>{approvedPRs.map(pr=><option key={pr.id} value={pr.id}>{pr.id} (ขอโดย {pr.requester})</option>)}</select></div>
-              <div><label className="block text-sm font-bold text-indigo-900 mb-2">ซัพพลายเออร์</label><select className="w-full border rounded-xl p-3 outline-none" value={selectedVendor} onChange={e=>setSelectedVendor(e.target.value)}><option value="">-- เลือกร้านค้า --</option>{db.vendors.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select></div>
-            </div>
-            <div className="text-right border-t pt-6"><button onClick={handleCreatePO} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-black text-lg shadow-md w-full md:w-auto"><Check className="inline mr-2"/> ยืนยันออก PO</button></div>
-          </div>
-        );
-      }
-
       return (
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <h2 className="text-2xl font-bold">ใบสั่งซื้อ (PO)</h2>
-            <div className="flex w-full md:w-auto gap-2">
-              <div className="relative flex-1 md:w-64"><input type="text" placeholder="ค้นหาเลขที่ PO, PR..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" /><Search className="absolute left-3 top-3 text-gray-400" size={18}/></div>
-              <button onClick={()=>setView('create')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md whitespace-nowrap"><Plus size={18} className="inline mr-1"/> สร้าง PO</button>
-            </div>
+          <div className="bg-white p-6 rounded-xl border shadow-sm flex gap-4 items-end">
+            <div className="flex-1"><label className="block text-sm font-bold mb-1">เลือก PR ที่อนุมัติ</label><select className="w-full p-2 border rounded" value={selectedPR} onChange={e=>setSelectedPR(e.target.value)}><option value="">- เลือก PR -</option>{approvedPRs.map(p=><option key={p.id} value={p.id}>{p.id}</option>)}</select></div>
+            <div className="flex-1"><label className="block text-sm font-bold mb-1">เลือกร้านค้า</label><select className="w-full p-2 border rounded" value={selectedVendor} onChange={e=>setSelectedVendor(e.target.value)}><option value="">- เลือกร้านค้า -</option>{db.vendors.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select></div>
+            <button onClick={createPO} className="bg-indigo-600 text-white px-6 py-2 rounded font-bold">ออก PO</button>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
-              <thead className="bg-gray-50 border-b text-sm text-gray-600 uppercase tracking-wider"><tr><th className="p-4">เลขที่ PO</th><th className="p-4">อ้างอิง PR</th><th className="p-4">ซัพพลายเออร์</th><th className="p-4">วันที่สั่ง</th><th className="p-4 text-center">สถานะ</th><th className="p-4 text-center">ยกเลิก</th></tr></thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredPOs.map(po => (
-                  <tr key={po.id} className="hover:bg-indigo-50/50">
-                    <td className="p-4 font-bold text-indigo-700">{po.id}</td><td className="p-4 text-sm">{po.prId}</td><td className="p-4 font-bold">{db.vendors.find(v=>v.id===po.vendorId)?.name}</td><td className="p-4 text-sm">{po.date}</td>
-                    <td className="p-4 text-center"><span className={`px-3 py-1.5 rounded-full text-xs font-bold inline-block w-28 ${po.status==='Completed'?'bg-emerald-100 text-emerald-700':'bg-blue-100 text-blue-700'}`}>{po.status==='Completed'?'รับครบแล้ว':'รอรับของ'}</span></td>
-                    <td className="p-4 text-center">{po.status === 'Pending Receipt' && <button onClick={()=>showConfirm('ยกเลิก', 'ลบ PO นี้?', ()=>updateDb('pos', db.pos.filter(p=>p.id!==po.id)))} className="text-red-500 p-2"><Trash2 size={16}/></button>}</td>
-                  </tr>
+          <div className="bg-white border rounded-xl overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50"><tr><th className="p-3">เลข PO</th><th className="p-3">อ้างอิง PR</th><th className="p-3">ร้านค้า</th><th className="p-3">สถานะ</th></tr></thead>
+              <tbody>
+                {db.pos.map(po => (
+                  <tr key={po.id} className="border-t"><td className="p-3 font-bold text-indigo-600">{po.id}</td><td className="p-3">{po.prId}</td><td className="p-3">{db.vendors.find(v=>v.id===po.vendorId)?.name}</td><td className="p-3">{po.status === 'Completed' ? <span className="text-emerald-600 font-bold">รับครบแล้ว</span> : <span className="text-blue-600 font-bold">รอรับของ</span>}</td></tr>
                 ))}
-                {filteredPOs.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-500">ไม่พบเอกสาร</td></tr>}
               </tbody>
             </table>
           </div>
@@ -350,17 +288,113 @@
       );
     };
 
-    // --- 7. COMPONENT: Goods Receipt (รับเข้า) ---
+    // --- 7. COMPONENT: STOCK ---
+    const StockComponent = ({ db, updateDb, showNotify, showAlert, showConfirm }) => {
+      const [isOpen, setIsOpen] = useState(false);
+      const [form, setForm] = useState(null);
+      const [selectedIds, setSelectedIds] = useState([]);
+      const [printData, setPrintData] = useState([]);
+
+      const handleAdd = () => { setForm({ id: `P${Date.now().toString().slice(-4)}`, barcode: '', name: '', category: '', location: '', unit: 'ชิ้น', price: 0, stock: 0, minStock: 10, isEdit: false }); setIsOpen(true); };
+      const handleEdit = (p) => { setForm({ ...p, isEdit: true }); setIsOpen(true); };
+      const handleDel = (id) => showConfirm('ลบสินค้า', 'ยืนยันการลบ?', () => updateDb('products', db.products.filter(p=>p.id!==id)));
+      
+      const save = () => {
+        if(!form.name || !form.id) return showAlert('ผิดพลาด', 'กรอกชื่อและรหัสให้ครบ', 'error');
+        if(form.isEdit) updateDb('products', db.products.map(p => p.id === form.id ? form : p));
+        else updateDb('products', [form, ...db.products]);
+        setIsOpen(false); showNotify('บันทึกสำเร็จ');
+      };
+
+      const toggleSelectAll = (e) => e.target.checked ? setSelectedIds(db.products.map(p => p.id)) : setSelectedIds([]);
+      const toggleSelect = (id) => selectedIds.includes(id) ? setSelectedIds(selectedIds.filter(i => i !== id)) : setSelectedIds([...selectedIds, id]);
+      const doPrint = (items) => { setPrintData(items); setTimeout(() => window.print(), 100); };
+
+      return (
+        <div className="space-y-4">
+          <div className={`flex justify-between items-center ${printData.length>0?'print:hidden':''}`}><h2 className="text-2xl font-bold">สต๊อกสินค้า</h2><button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">+ เพิ่มสินค้า</button></div>
+          
+          <div className={`bg-white rounded-2xl shadow-sm border overflow-x-auto ${printData.length>0?'print:hidden':''}`}>
+            <table className="w-full text-left min-w-[1000px]">
+              <thead className="bg-gray-50 border-b text-xs uppercase tracking-wider text-gray-500">
+                <tr><th className="p-4 text-center"><input type="checkbox" checked={selectedIds.length>0 && selectedIds.length===db.products.length} onChange={toggleSelectAll} className="w-4 h-4 rounded text-blue-600"/></th><th className="p-4">รหัส / บาร์โค้ด</th><th className="p-4">ชื่อสินค้า</th><th className="p-4">หมวดหมู่</th><th className="p-4 text-right">Min Stock</th><th className="p-4 text-right">คงเหลือ</th><th className="p-4 text-center">สถานะ</th><th className="p-4 text-center">จัดการ</th></tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {db.products.map(p => (
+                  <tr key={p.id} className={`hover:bg-gray-50 ${selectedIds.includes(p.id)?'bg-blue-50/40':''}`}>
+                    <td className="p-4 text-center"><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={()=>toggleSelect(p.id)} className="w-4 h-4 rounded text-blue-600"/></td>
+                    <td className="p-4 font-bold">{p.id} <span className="block text-xs font-normal text-blue-600">{p.barcode||'-'}</span></td>
+                    <td className="p-4 font-medium">{p.name}</td>
+                    <td className="p-4 text-sm">{p.category}</td>
+                    <td className="p-4 text-right text-gray-400">{p.minStock}</td>
+                    <td className="p-4 text-right font-black text-lg">{p.stock} <span className="text-xs font-normal text-gray-500">{p.unit}</span></td>
+                    <td className="p-4 text-center">
+                       {p.stock === 0 ? <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">OUT OF STOCK</span> : 
+                        p.stock <= p.minStock ? <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">LOW STOCK</span> : 
+                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">IN STOCK</span>}
+                    </td>
+                    <td className="p-4 text-center">
+                      <button onClick={()=>doPrint([p])} className="text-gray-500 p-2"><Printer size={18}/></button>
+                      <button onClick={()=>handleEdit(p)} className="text-amber-500 p-2"><Edit size={18}/></button>
+                      <button onClick={()=>handleDel(p.id)} className="text-red-500 p-2"><Trash2 size={18}/></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {selectedIds.length > 0 && <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex justify-between items-center"><span className="font-bold text-blue-800 ml-2">เลือกแล้ว {selectedIds.length} รายการ</span><div className="flex gap-2"><button onClick={()=>doPrint(db.products.filter(p=>selectedIds.includes(p.id)))} className="bg-white border border-blue-300 text-blue-700 px-4 py-2 rounded-lg font-bold shadow-sm">พิมพ์บาร์โค้ด</button><button onClick={()=>showConfirm('ลบกลุ่ม', 'ลบสินค้าที่เลือกทั้งหมด?', ()=>{updateDb('products', db.products.filter(p=>!selectedIds.includes(p.id))); setSelectedIds([])})} className="bg-white border border-red-300 text-red-600 px-4 py-2 rounded-lg font-bold shadow-sm">ลบ</button></div></div>}
+
+          {/* Quick Print Section */}
+          {printData.length > 0 && (
+            <div className="fixed inset-0 bg-white z-[100] hidden print:block p-10">
+              <div className="grid grid-cols-4 gap-4">
+                {printData.map((prod, idx) => (
+                  <div key={idx} className="text-center border border-dashed border-gray-400 p-4 rounded-xl flex flex-col items-center justify-center break-inside-avoid">
+                    <p className="font-bold text-[10px] mb-1 truncate w-full text-black">{prod.name}</p>
+                    <img src={`https://barcode.tec-it.com/barcode.ashx?data=${prod.barcode || prod.id}&code=Code128&translate-esc=on`} className="h-12 object-contain" />
+                    <p className="font-mono text-xs font-bold mt-1 text-black tracking-widest">{prod.barcode || prod.id}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {printData.length > 0 && <div className="fixed bottom-4 right-4 print:hidden z-[110]"><button onClick={()=>setPrintData([])} className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold shadow-2xl">ปิดหน้าต่างปริ้นท์</button></div>}
+
+          {isOpen && (
+            <div className="fixed inset-0 bg-black/50 z-[150] flex items-center justify-center p-4">
+              <div className="bg-white p-6 rounded-xl w-full max-w-md">
+                <h3 className="font-bold mb-4">{form.isEdit?'แก้ไข':'เพิ่ม'}สินค้า</h3>
+                <div className="space-y-3">
+                  <input type="text" placeholder="รหัส" className="w-full border p-2 rounded bg-gray-50" value={form.id} disabled={form.isEdit} onChange={e=>setForm({...form, id: e.target.value})}/>
+                  <input type="text" placeholder="ชื่อสินค้า" className="w-full border p-2 rounded" value={form.name} onChange={e=>setForm({...form, name: e.target.value})}/>
+                  <div className="flex gap-2">
+                    <input type="number" placeholder="สต๊อก" className="w-1/2 border p-2 rounded" value={form.stock} onChange={e=>setForm({...form, stock: Number(e.target.value)})} disabled={form.isEdit}/>
+                    <input type="number" placeholder="จุดสั่งซื้อ" className="w-1/2 border p-2 rounded" value={form.minStock} onChange={e=>setForm({...form, minStock: Number(e.target.value)})}/>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 mt-6">
+                  <button onClick={()=>setIsOpen(false)} className="px-4 py-2 border rounded">ยกเลิก</button>
+                  <button onClick={save} className="px-4 py-2 bg-blue-600 text-white rounded font-bold">บันทึก</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // --- 8. COMPONENT: GoodsReceipt (รับเข้า) ---
     const GoodsReceiptComponent = ({ db, updateMultiple, showNotify, showAlert, showConfirm }) => {
       const [selectedPO, setSelectedPO] = useState('');
       const [scanInput, setScanInput] = useState('');
       const [scannedItems, setScannedItems] = useState([]);
-
       const activePOs = db.pos.filter(po => po.status === 'Pending Receipt');
       const currentPO = db.pos.find(p => p.id === selectedPO);
 
       const handleScan = (e) => {
-        if (e.key === 'Enter' && scanInput.trim()) {
+        if (e.key === 'Enter' && scanInput.trim() !== '') {
           const val = scanInput.trim(); setScanInput(''); 
           const product = db.products.find(p => p.barcode === val || p.id === val || p.name === val);
           if (!product) return showAlert('ผิดพลาด', 'ไม่พบสินค้านี้', 'error');
@@ -385,7 +419,7 @@
             const itemIdx = updatedPO.items.findIndex(i => i.productId === scan.productId);
             if (itemIdx > -1) updatedPO.items[itemIdx].receivedQty += scan.qty;
             const prodIdx = updatedProducts.findIndex(p => p.id === scan.productId);
-            if (prodIdx > -1) updatedProducts[prodIdx].stock += scan.qty;
+            if (prodIdx > -1) updatedProducts[prodIdx] = {...updatedProducts[prodIdx], stock: updatedProducts[prodIdx].stock + scan.qty};
             newTransactions.push({ id: `TXN-${Date.now()}-${Math.floor(Math.random()*1000)}`, type: 'IN', date: new Date().toISOString(), productId: scan.productId, qty: scan.qty, referenceNo: updatedPO.id });
           });
 
@@ -411,7 +445,7 @@
             <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100"><label className="block font-bold text-blue-900 mb-2">สแกนบาร์โค้ด / รหัส / ชื่อ</label><input type="text" value={scanInput} onChange={e=>setScanInput(e.target.value)} onKeyDown={handleScan} placeholder="ยิงบาร์โค้ดแล้ว Enter..." className="w-full p-4 text-xl font-mono border-2 border-blue-200 rounded-xl outline-none focus:border-blue-500" autoFocus /></div>
             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden"><div className="p-4 bg-gray-50 border-b flex justify-between"><h3 className="font-bold">รายการใน {currentPO.id}</h3><button onClick={()=>setSelectedPO('')} className="text-sm border px-3 py-1 rounded bg-white font-bold">เปลี่ยน PO</button></div>
             <table className="w-full text-left text-sm">
-              <thead className="bg-white border-b"><tr><th className="p-3">สินค้า</th><th className="p-3 text-center">สั่ง</th><th className="p-3 text-center">รับแล้ว</th><th className="p-3 text-center">สแกนรอบนี้</th></tr></thead>
+              <thead className="bg-white border-b"><tr><th className="p-3">สินค้า</th><th className="p-3 text-center">สั่ง (PO)</th><th className="p-3 text-center">รับแล้ว</th><th className="p-3 text-center">สแกนรอบนี้</th></tr></thead>
               <tbody>{currentPO.items.map((it, idx) => {
                 const scanQty = scannedItems.find(i => i.productId === it.productId)?.qty || 0;
                 const isComp = it.receivedQty + scanQty >= it.expectedQty;
@@ -424,7 +458,7 @@
       );
     };
 
-    // --- 8. COMPONENT: Goods Issue (เบิกจ่าย) ---
+    // --- 9. COMPONENT: Goods Issue (เบิกจ่าย) ---
     const GoodsIssueComponent = ({ db, updateMultiple, showNotify, showAlert, showConfirm }) => {
       const [scanInput, setScanInput] = useState('');
       const [issueItems, setIssueItems] = useState([]);
@@ -463,78 +497,10 @@
       return (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border"><label className="block font-bold mb-2">ผู้เบิก / แผนก *</label><input type="text" value={reference} onChange={e=>setReference(e.target.value)} placeholder="ระบุอ้างอิง..." className="w-full border-2 border-amber-200 rounded-xl p-3 bg-amber-50/30 font-bold outline-none focus:border-amber-500" /><div className="mt-6 pt-6 border-t grid grid-cols-2 gap-4"><div><label className="block font-bold text-amber-800 mb-2">สแกนบาร์โค้ด</label><input type="text" value={scanInput} onChange={e=>setScanInput(e.target.value)} onKeyDown={handleScan} placeholder="ยิงสแกน..." className="w-full border-2 border-amber-200 rounded-lg p-3 font-mono outline-none" /></div><div><label className="block font-bold mb-2">เลือกด้วยมือ</label><div className="flex gap-2"><input type="text" list="prod-list" value={manualProd} onChange={e=>setManualProd(e.target.value)} className="w-full border rounded-lg p-3 outline-none" placeholder="พิมพ์ชื่อ..."/><datalist id="prod-list">{db.products.filter(p=>p.stock>0).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</datalist><button onClick={()=>{const p=db.products.find(x=>x.id===manualProd); if(p)addIssue(p); setManualProd('');}} className="bg-slate-800 text-white px-4 rounded-lg"><Plus/></button></div></div></div></div>
-            {issueItems.length > 0 && <div className="bg-white rounded-2xl border shadow-sm"><table className="w-full text-left text-sm"><thead className="bg-gray-50 border-b"><tr><th className="p-4">สินค้า</th><th className="p-4 text-center">เบิก</th><th className="p-4 text-center">ลบ</th></tr></thead><tbody>{issueItems.map((it, i) => <tr key={i} className="border-b"><td className="p-4 font-bold">{db.products.find(p=>p.id===it.productId)?.name}</td><td className="p-4 text-center font-black text-amber-600 text-lg">{it.qty}</td><td className="p-4 text-center"><button onClick={()=>setIssueItems(issueItems.filter(x=>x.productId!==it.productId))} className="text-red-500"><X size={20}/></button></td></tr>)}</tbody></table></div>}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border"><label className="block font-bold mb-2">ผู้เบิก / แผนก *</label><input type="text" value={reference} onChange={e=>setReference(e.target.value)} placeholder="ระบุอ้างอิง..." className="w-full border-2 border-amber-200 rounded-xl p-3 bg-amber-50/30 font-bold outline-none focus:border-amber-500" /><div className="mt-6 pt-6 border-t grid grid-cols-2 gap-4"><div><label className="block font-bold text-amber-800 mb-2">สแกนบาร์โค้ด</label><input type="text" value={scanInput} onChange={e=>setScanInput(e.target.value)} onKeyDown={handleScan} placeholder="ยิงสแกน..." className="w-full border-2 border-amber-200 rounded-lg p-3 font-mono outline-none" /></div><div><label className="block font-bold mb-2">เลือกด้วยมือ</label><div className="flex gap-2"><input type="text" list="prod-list" value={manualProd} onChange={e=>setManualProd(e.target.value)} className="w-full border rounded-lg p-3 outline-none" placeholder="พิมพ์ชื่อ..."/><datalist id="prod-list">{db.products.filter(p=>p.stock>0).map(p=><option key={p.id} value={p.id}>{p.name} (เหลือ {p.stock})</option>)}</datalist><button onClick={()=>{const p=db.products.find(x=>x.id===manualProd); if(p)addIssue(p); setManualProd('');}} className="bg-slate-800 text-white px-4 rounded-lg"><Plus/></button></div></div></div></div>
+            {issueItems.length > 0 && <div className="bg-white rounded-2xl border shadow-sm"><table className="w-full text-left text-sm"><thead className="bg-gray-50 border-b"><tr><th className="p-4">สินค้า</th><th className="p-4 text-center">คงเหลือ</th><th className="p-4 text-center">เบิก</th><th className="p-4 text-center">ลบ</th></tr></thead><tbody>{issueItems.map((it, i) => <tr key={i} className="border-b hover:bg-gray-50"><td className="p-4 font-bold">{db.products.find(p=>p.id===it.productId)?.name}</td><td className="p-4 text-center">{db.products.find(p=>p.id===it.productId)?.stock}</td><td className="p-4 text-center font-black text-amber-600 text-lg">{it.qty}</td><td className="p-4 text-center"><button onClick={()=>setIssueItems(issueItems.filter(x=>x.productId!==it.productId))} className="text-red-500"><Trash2 size={16}/></button></td></tr>)}</tbody></table></div>}
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-sm border h-fit"><h3 className="font-bold text-lg mb-4 pb-2 border-b">สรุปการเบิกจ่าย</h3><div className="flex justify-between mb-2 text-sm"><span className="text-gray-500">อ้างอิง:</span><span className="font-bold">{reference || '-'}</span></div><div className="flex justify-between mb-6 text-xl mt-4 pt-4 border-t"><span className="text-gray-500">รวมชิ้น:</span><span className="font-black text-amber-500">{issueItems.reduce((s,i)=>s+i.qty,0)}</span></div><button onClick={confirmIssue} disabled={!reference || issueItems.length===0} className="w-full bg-amber-500 text-white font-black py-4 rounded-xl hover:bg-amber-600 shadow-md">ยืนยันตัดสต๊อก</button></div>
-        </div>
-      );
-    };
-
-    // --- 9. COMPONENT: Stock & Inventory ---
-    const StockComponent = ({ db, updateDb, showNotify, showAlert, showConfirm }) => {
-      const [viewMode, setViewMode] = useState('table'); 
-      const [searchTerm, setSearchTerm] = useState('');
-      const [isModalOpen, setIsModalOpen] = useState(false);
-      const [formData, setFormData] = useState(null);
-      const [selectedIds, setSelectedIds] = useState([]);
-      const [printData, setPrintData] = useState([]); // Barcode Print State inside Stock
-
-      const filteredProducts = db.products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.id.toLowerCase().includes(searchTerm.toLowerCase()) || (p.barcode && p.barcode.toLowerCase().includes(searchTerm.toLowerCase())));
-
-      const handleAdd = () => { setFormData({ id: `P00${db.products.length + 1}`, barcode: '', name: '', category: '', location: '', unit: 'ชิ้น', price: 0, stock: 0, minStock: 10, image: '', isEdit: false }); setIsModalOpen(true); };
-      const handleEdit = (product) => { setFormData({ ...product, isEdit: true }); setIsModalOpen(true); };
-      const handleDelete = (id) => { showConfirm('ยืนยันการลบ', 'ลบสินค้ารหัสนี้ออกจากระบบอย่างถาวร?', () => { updateDb('products', db.products.filter(p => p.id !== id)); showNotify('ลบสำเร็จ', 'success'); }); };
-
-      const handleSave = () => {
-        if(!formData.id || !formData.name) return showAlert('ข้อมูลไม่ครบ', 'กรุณากรอกรหัสและชื่อสินค้าให้ครบถ้วน', 'error');
-        if (formData.isEdit) { updateDb('products', db.products.map(p => p.id === formData.id ? formData : p)); showNotify('อัปเดตสำเร็จ'); } 
-        else {
-          if(db.products.find(p => p.id === formData.id)) return showAlert('ข้อมูลซ้ำ', 'รหัสสินค้านี้มีในระบบแล้ว', 'error');
-          updateDb('products', [formData, ...db.products]); showNotify('เพิ่มสำเร็จ');
-        }
-        setIsModalOpen(false);
-      };
-
-      const toggleSelectAll = (e) => e.target.checked ? setSelectedIds(filteredProducts.map(p => p.id)) : setSelectedIds([]);
-      const toggleSelect = (id) => selectedIds.includes(id) ? setSelectedIds(selectedIds.filter(i => i !== id)) : setSelectedIds([...selectedIds, id]);
-
-      const doPrint = (items) => { setPrintData(items); setTimeout(() => window.print(), 100); };
-
-      return (
-        <div className="space-y-6">
-          <div className={`space-y-6 ${printData.length > 0 ? 'print:hidden' : ''}`}>
-            <div className="flex justify-between items-center"><h2 className="text-2xl font-bold">จัดการสต๊อกสินค้า</h2><div className="flex gap-2"><div className="relative"><input type="text" placeholder="ค้นหาสินค้า..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="pl-10 pr-4 py-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 w-64"/><Search className="absolute left-3 top-3 text-gray-400" size={18}/></div><button onClick={handleAdd} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold"><Plus className="inline mr-1"/> เพิ่มสินค้า</button></div></div>
-            
-            {selectedIds.length > 0 && <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex justify-between items-center"><span className="font-bold text-blue-800 ml-2">เลือกแล้ว {selectedIds.length} รายการ</span><div className="flex gap-2"><button onClick={()=>doPrint(db.products.filter(p=>selectedIds.includes(p.id)))} className="bg-white border border-blue-300 text-blue-700 px-4 py-2 rounded-lg font-bold shadow-sm">พิมพ์บาร์โค้ด</button><button onClick={()=>showConfirm('ลบกลุ่ม', 'ลบสินค้าที่เลือกทั้งหมด?', ()=>{updateDb('products', db.products.filter(p=>!selectedIds.includes(p.id))); setSelectedIds([])})} className="bg-white border border-red-300 text-red-600 px-4 py-2 rounded-lg font-bold shadow-sm">ลบ</button></div></div>}
-
-            <div className="bg-white rounded-2xl shadow-sm border overflow-x-auto"><table className="w-full text-left"><thead className="bg-gray-50 border-b text-xs uppercase text-gray-500"><tr><th className="p-4 text-center"><input type="checkbox" checked={selectedIds.length>0 && selectedIds.length===filteredProducts.length} onChange={toggleSelectAll} className="w-4 h-4 rounded text-blue-600"/></th><th className="p-4">รหัส/บาร์โค้ด</th><th className="p-4">ชื่อสินค้า</th><th className="p-4">หมวดหมู่</th><th className="p-4 text-right">คงเหลือ</th><th className="p-4 text-center">สถานะ</th><th className="p-4 text-center">จัดการ</th></tr></thead>
-            <tbody className="divide-y divide-gray-100">{filteredProducts.map(p => (
-              <tr key={p.id} className={`hover:bg-gray-50 ${selectedIds.includes(p.id)?'bg-blue-50/40':''}`}><td className="p-4 text-center"><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={()=>toggleSelect(p.id)} className="w-4 h-4 rounded text-blue-600"/></td><td className="p-4 font-bold text-gray-800">{p.id} <span className="block text-xs font-mono text-blue-600">{p.barcode||'-'}</span></td><td className="p-4 font-bold">{p.name}</td><td className="p-4 text-sm">{p.category}</td><td className="p-4 text-right font-black text-lg">{p.stock} <span className="text-xs font-normal text-gray-500">{p.unit}</span></td><td className="p-4 text-center">{p.stock===0?<span className="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">OUT OF STOCK</span>:p.stock<=p.minStock?<span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">LOW STOCK</span>:<span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">IN STOCK</span>}</td><td className="p-4 text-center"><button onClick={()=>doPrint([p])} className="text-gray-500 p-2"><Printer size={18}/></button><button onClick={()=>handleEdit(p)} className="text-amber-500 p-2"><Edit size={18}/></button><button onClick={()=>handleDelete(p.id)} className="text-red-500 p-2"><Trash2 size={18}/></button></td></tr>
-            ))}</tbody></table></div>
-          </div>
-
-          {/* Quick Print Section inside Stock */}
-          {printData.length > 0 && (
-            <div className="fixed inset-0 bg-white z-[100] hidden print:block p-10">
-              <div className="grid grid-cols-4 gap-4">
-                {printData.map((prod, idx) => (
-                  <div key={idx} className="text-center border border-dashed border-gray-400 p-4 rounded-xl flex flex-col items-center justify-center break-inside-avoid">
-                    <p className="font-bold text-[10px] mb-1 truncate w-full text-black">{prod.name}</p>
-                    <img src={`https://barcode.tec-it.com/barcode.ashx?data=${prod.barcode || prod.id}&code=Code128&translate-esc=on`} className="h-12 object-contain" />
-                    <p className="font-mono text-xs font-bold mt-1 text-black tracking-widest">{prod.barcode || prod.id}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {printData.length > 0 && <div className="fixed bottom-4 right-4 print:hidden z-[110]"><button onClick={()=>setPrintData([])} className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold shadow-2xl">ปิดหน้าต่างปริ้นท์</button></div>}
-
-          {isModalOpen && (
-            <div className="fixed inset-0 bg-slate-900/60 z-[120] flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl"><div className="px-6 py-5 border-b flex justify-between"><h3 className="font-bold text-xl">{formData.isEdit?'แก้ไข':'เพิ่ม'}สินค้า</h3><button onClick={()=>setIsModalOpen(false)}><X/></button></div><div className="p-6 grid grid-cols-2 gap-4"><div className="col-span-2"><label className="font-bold text-sm">ชื่อสินค้า</label><input type="text" className="w-full border rounded-xl p-3" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})}/></div><div><label className="font-bold text-sm">รหัส</label><input type="text" className="w-full border rounded-xl p-3 bg-gray-50" value={formData.id} disabled/></div><div><label className="font-bold text-sm">บาร์โค้ด</label><input type="text" className="w-full border rounded-xl p-3" value={formData.barcode} onChange={e=>setFormData({...formData, barcode: e.target.value})}/></div><div><label className="font-bold text-sm">หมวดหมู่</label><input type="text" className="w-full border rounded-xl p-3" value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})}/></div><div><label className="font-bold text-sm">หน่วย</label><input type="text" className="w-full border rounded-xl p-3" value={formData.unit} onChange={e=>setFormData({...formData, unit: e.target.value})}/></div><div><label className="font-bold text-sm">ราคา</label><input type="number" className="w-full border rounded-xl p-3" value={formData.price} onChange={e=>setFormData({...formData, price: Number(e.target.value)})}/></div><div><label className="font-bold text-sm text-blue-600">จุดแจ้งเตือน (Min Stock)</label><input type="number" className="w-full border rounded-xl p-3 border-blue-200 bg-blue-50" value={formData.minStock} onChange={e=>setFormData({...formData, minStock: Number(e.target.value)})}/></div></div><div className="p-6 border-t bg-gray-50 flex justify-end gap-3 rounded-b-2xl"><button onClick={()=>setIsModalOpen(false)} className="px-6 py-3 font-bold text-gray-600">ยกเลิก</button><button onClick={handleSave} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md">บันทึกข้อมูล</button></div></div>
-            </div>
-          )}
         </div>
       );
     };
@@ -578,6 +544,13 @@
         setModal({open: false}); showNotify('บันทึกสำเร็จ');
       };
 
+      const saveVendor = () => {
+        if(!modal.data.name) return showAlert('ผิดพลาด', 'กรอกชื่อซัพพลายเออร์', 'error');
+        if(modal.data.isEdit) updateDb('vendors', db.vendors.map(v => v.id === modal.data.id ? modal.data : v));
+        else updateDb('vendors', [...db.vendors, { ...modal.data, id: `V00${db.vendors.length+1}` }]);
+        setModal({open: false}); showNotify('บันทึกสำเร็จ');
+      };
+
       return (
         <div className="space-y-6">
           <h2 className="text-2xl font-bold">ตั้งค่าระบบ (Settings)</h2>
@@ -591,28 +564,41 @@
             </div>
           )}
 
-          {/* User Form Modal */}
-          {modal.open && modal.type === 'user' && (
+          {view === 'vendors' && (
+            <div className="bg-white rounded-2xl shadow-sm border p-4">
+              <div className="text-right mb-4"><button onClick={()=>setModal({open:true, type:'vendor', data:{name:'',contact:'',term:'Cash',isEdit:false}})} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md"><Plus size={18} className="inline mr-1"/> เพิ่มร้านค้า</button></div>
+              <table className="w-full text-left text-sm"><thead className="bg-gray-50 border-b"><tr><th className="p-4">รหัส</th><th className="p-4">ชื่อร้านค้า/บริษัท</th><th className="p-4">ติดต่อ</th><th className="p-4 text-center">จัดการ</th></tr></thead>
+              <tbody>{db.vendors.map(v => <tr key={v.id} className="border-b"><td className="p-4 font-bold text-indigo-600">{v.id}</td><td className="p-4 font-bold">{v.name}</td><td className="p-4 text-gray-500">{v.contact}</td><td className="p-4 text-center flex justify-center gap-2"><button onClick={()=>setModal({open:true, type:'vendor', data:{...v, isEdit:true}})} className="text-amber-500 bg-amber-50 p-2 rounded-lg"><Edit size={16}/></button><button onClick={()=>showConfirm('ลบ', 'ลบร้านค้านี้?', ()=>updateDb('vendors', db.vendors.filter(x=>x.id!==v.id)))} className="text-red-500 bg-red-50 p-2 rounded-lg"><Trash2 size={16}/></button></td></tr>)}</tbody></table>
+            </div>
+          )}
+
+          {/* User/Vendor Modal */}
+          {modal.open && (
             <div className="fixed inset-0 bg-slate-900/60 z-[150] flex items-center justify-center p-4">
               <div className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
-                <h3 className="font-bold text-xl mb-6">{modal.data.isEdit ? 'แก้ไข' : 'เพิ่ม'}ผู้ใช้งาน</h3>
+                <h3 className="font-bold text-xl mb-6">{modal.data.isEdit ? 'แก้ไข' : 'เพิ่ม'}{modal.type === 'user' ? 'ผู้ใช้งาน' : 'ซัพพลายเออร์'}</h3>
                 <div className="space-y-4">
-                  <input type="text" placeholder="Username *" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={modal.data.username} onChange={e=>setModal({...modal, data:{...modal.data, username: e.target.value}})} disabled={modal.data.id==='U001'} />
-                  <input type="text" placeholder="Password *" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={modal.data.password} onChange={e=>setModal({...modal, data:{...modal.data, password: e.target.value}})} />
-                  <input type="text" placeholder="ชื่อ-นามสกุล *" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={modal.data.name} onChange={e=>setModal({...modal, data:{...modal.data, name: e.target.value}})} />
-                  <select className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold" value={modal.data.role} onChange={e=>setModal({...modal, data:{...modal.data, role: e.target.value}})} disabled={modal.data.id==='U001'}><option value="Requester">Requester (ผู้ขอซื้อ)</option><option value="Purchaser">Purchaser (จัดซื้อ)</option><option value="Store">Store (คลัง)</option><option value="Admin">Admin (แอดมิน)</option></select>
+                  {modal.type === 'user' ? (
+                    <>
+                      <input type="text" placeholder="Username *" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={modal.data.username} onChange={e=>setModal({...modal, data:{...modal.data, username: e.target.value}})} disabled={modal.data.id==='U001'} />
+                      <input type="text" placeholder="Password *" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={modal.data.password} onChange={e=>setModal({...modal, data:{...modal.data, password: e.target.value}})} />
+                      <input type="text" placeholder="ชื่อ-นามสกุล *" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={modal.data.name} onChange={e=>setModal({...modal, data:{...modal.data, name: e.target.value}})} />
+                      <select className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold" value={modal.data.role} onChange={e=>setModal({...modal, data:{...modal.data, role: e.target.value}})} disabled={modal.data.id==='U001'}><option value="Requester">Requester (ผู้ขอซื้อ)</option><option value="Purchaser">Purchaser (จัดซื้อ)</option><option value="Store">Store (คลัง)</option><option value="Admin">Admin (แอดมิน)</option></select>
+                    </>
+                  ) : (
+                    <>
+                      <input type="text" placeholder="ชื่อบริษัท/ร้านค้า *" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={modal.data.name} onChange={e=>setModal({...modal, data:{...modal.data, name: e.target.value}})} />
+                      <input type="text" placeholder="ข้อมูลติดต่อ" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={modal.data.contact} onChange={e=>setModal({...modal, data:{...modal.data, contact: e.target.value}})} />
+                      <select className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold" value={modal.data.term} onChange={e=>setModal({...modal, data:{...modal.data, term: e.target.value}})}><option value="Cash">Cash (เงินสด)</option><option value="30 Days">30 Days</option></select>
+                    </>
+                  )}
                 </div>
-                <div className="flex justify-end gap-3 mt-8"><button onClick={()=>setModal({open:false})} className="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-200">ยกเลิก</button><button onClick={saveUser} className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700">บันทึก</button></div>
+                <div className="flex justify-end gap-3 mt-8"><button onClick={()=>setModal({open:false})} className="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-200">ยกเลิก</button><button onClick={modal.type==='user'?saveUser:saveVendor} className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700">บันทึก</button></div>
               </div>
             </div>
           )}
         </div>
       );
-    };
-
-    const BarcodePrinterComponent = ({ db }) => {
-      // Barcode printing logic is integrated inside StockComponent in this condensed view to save space and keep features tied together.
-      return <div className="p-8 text-center bg-white rounded-2xl border"><Printer size={48} className="mx-auto text-blue-500 mb-4"/><h2 className="text-xl font-bold">ไปที่หน้า "สต๊อกคงเหลือ"</h2><p className="text-gray-500 mt-2">คุณสามารถติ๊กเลือกสินค้าหลายๆ รายการในหน้าสต๊อก และกดปุ่ม "พิมพ์บาร์โค้ด" ได้เลยครับ</p></div>;
     };
 
     // --- MAIN APP (STATE CONTROLLER) ---
@@ -691,19 +677,16 @@
             <div className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto custom-scrollbar">
               {currentUser.role !== 'Requester' && <button onClick={() => changeTab('dashboard')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='dashboard'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><Home size={20} /> <span>แดชบอร์ด</span></button>}
               {perms.canCreatePR && <><div className="text-[11px] font-black text-slate-500 uppercase mt-4 mb-2 ml-2">จัดซื้อ</div><button onClick={() => changeTab('pr')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='pr'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><FileText size={20} /> <span>ใบขอซื้อ (PR)</span></button>{perms.canCreatePO && <button onClick={() => changeTab('po')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='po'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><ShoppingCart size={20} /> <span>ใบสั่งซื้อ (PO)</span></button>}</>}
-              {perms.canManageInventory && <><div className="text-[11px] font-black text-slate-500 uppercase mt-4 mb-2 ml-2">คลังสินค้า</div><button onClick={() => changeTab('gr')} className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='gr'?'bg-emerald-500 text-white':'text-slate-300 hover:bg-slate-800'} `}><div className="flex items-center space-x-3"><PackagePlus size={20} /> <span>รับเข้า (สแกน)</span></div></button><button onClick={() => changeTab('issue')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='issue'?'bg-amber-500 text-white':'text-slate-300 hover:bg-slate-800'}`}><PackageMinus size={20} /> <span>เบิกจ่าย (สแกน)</span></button><button onClick={() => changeTab('stock')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='stock'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><LayoutGrid size={20} /> <span>สต๊อกคงเหลือ</span></button><button onClick={() => changeTab('history')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='history'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><Clock size={20} /> <span>ประวัติ</span></button></>}
+              {perms.canManageInventory && <><div className="text-[11px] font-black text-slate-500 uppercase mt-4 mb-2 ml-2">คลังสินค้า</div><button onClick={() => changeTab('gr')} className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='gr'?'bg-emerald-500 text-white':'text-slate-300 hover:bg-slate-800'} `}><div className="flex items-center space-x-3"><PackagePlus size={20} /> <span>รับเข้า (สแกน)</span></div>{db.pos.filter(p=>p.status==='Pending Receipt').length > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{db.pos.filter(p=>p.status==='Pending Receipt').length}</span>}</button><button onClick={() => changeTab('issue')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='issue'?'bg-amber-500 text-white':'text-slate-300 hover:bg-slate-800'}`}><PackageMinus size={20} /> <span>เบิกจ่าย (สแกน)</span></button><button onClick={() => changeTab('stock')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='stock'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><LayoutGrid size={20} /> <span>สต๊อกคงเหลือ</span></button><button onClick={() => changeTab('history')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='history'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><Clock size={20} /> <span>ประวัติ</span></button></>}
               {perms.canViewReports && <button onClick={() => changeTab('reports')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold mt-4 ${activeTab==='reports'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><PieChart size={20} /> <span>รายงาน</span></button>}
               {perms.canManageSettings && <button onClick={() => changeTab('settings')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold mt-4 ${activeTab==='settings'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><Settings size={20} /> <span>ตั้งค่าระบบ</span></button>}
             </div>
-            <div className="p-5 border-t border-slate-800 flex justify-between items-center"><div className="flex items-center space-x-3"><div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold">{currentUser.name.charAt(0)}</div><div><p className="font-bold text-sm">{currentUser.name}</p><p className="text-[10px] text-blue-400 font-bold uppercase">{currentUser.role}</p></div></div><button onClick={()=>showConfirm('ออกระบบ', 'ต้องการออกจากระบบ?', ()=>setCurrentUser(null))} className="text-slate-400 hover:text-red-400"><LogOut size={20} /></button></div>
+            <div className="p-5 border-t border-slate-800 flex justify-between items-center"><div className="flex items-center space-x-3"><div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold">{currentUser.name.charAt(0)}</div><div><p className="font-bold text-sm">{currentUser.name}</p><p className="text-[10px] text-blue-400 font-bold uppercase">{currentUser.role}</p></div></div><button onClick={()=>showConfirm('ออกจากระบบ', 'ยืนยัน?', ()=>setCurrentUser(null))} className="text-slate-400 hover:text-red-400"><LogOut size={20} /></button></div>
           </div>
 
-          {/* Main Area */}
           <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-            <header className="bg-white border-b h-16 flex items-center justify-between px-4 md:px-8 print:hidden">
-              <div className="flex items-center"><button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden mr-4"><Menu size={24} /></button><h2 className="font-black uppercase text-gray-800 tracking-widest">{activeTab}</h2></div>
-            </header>
-            <main className="flex-1 overflow-y-auto p-4 md:p-8"><div className="max-w-7xl mx-auto">
+            <header className="bg-white border-b h-16 flex items-center px-4 md:px-8 print:hidden"><button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden mr-4"><Menu size={24} /></button><h2 className="font-black uppercase text-gray-800 tracking-widest">{activeTab}</h2></header>
+            <main className="flex-1 overflow-y-auto p-4 md:p-8"><div className="max-w-7xl mx-auto pb-20">
               {activeTab === 'dashboard' && <Dashboard db={db} changeTab={changeTab} currentUser={currentUser} perms={perms} />}
               {activeTab === 'pr' && <PRComponent db={db} updateDb={updateDb} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} currentUser={currentUser} perms={perms} />}
               {activeTab === 'po' && <POComponent db={db} updateDb={updateDb} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} />}
@@ -717,7 +700,7 @@
           </div>
 
           <CustomDialog config={dialogConfig} closeDialog={closeDialog} />
-          {notification && <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl text-white text-sm font-bold z-[300] bg-gray-900`}><CheckCircle2 className="inline mr-2" size={24} />{notification.msg}</div>}
+          {notification && <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-xl text-white text-sm font-bold z-[300] bg-gray-900`}><CheckCircle2 className="inline mr-2" size={24} />{notification.msg}</div>}
         </div>
       );
     }
