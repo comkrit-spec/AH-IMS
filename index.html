@@ -4,8 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ASIA HYDRO - Procurement & Inventory System</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
   <style>
     body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -34,11 +37,11 @@
     } = Lucide;
 
     // =========================================================================
-    // 🔴 ใส่ URL ของ GOOGLE APPS SCRIPT ของคุณตรงนี้ 🔴
+    // 🔴 1. วาง URL ของ GOOGLE APPS SCRIPT ของบริษัท ตรงนี้
     // =========================================================================
     const YOUR_GAS_URL = "https://script.google.com/macros/s/AKfycbyLsmvfZhwVf-6v7C-2KziMZU8ZklXdLOxVJAwc7AqH3G3ec5o3NxgLepzdIkPsXseZ2g/exec"; 
 
-    // --- ข้อมูลแม่แบบ (ใช้สร้างฐานข้อมูลอัตโนมัติเมื่อรันครั้งแรก) ---
+    // --- ข้อมูลจำลองสำหรับครั้งแรกที่ระบบยังไม่มีข้อมูลบน Cloud ---
     const initData = {
       users: [
         { id: 'U001', username: 'admin', password: '123', name: 'Admin (ผู้ดูแลระบบ)', role: 'Admin', department: 'IT' },
@@ -76,28 +79,12 @@
                 {isError ? <AlertTriangle size={32} className="text-red-500"/> : isConfirm ? <HelpCircle size={32} className="text-amber-500"/> : <Info size={32} className="text-blue-500"/>}
               </div>
               <h3 className={`text-xl font-bold mb-2 ${isError ? 'text-red-600' : isConfirm ? 'text-amber-600' : 'text-blue-600'}`}>{config.title}</h3>
-              <p className="text-gray-600 text-sm">{config.message}</p>
+              <p className="text-gray-600 text-sm whitespace-pre-wrap">{config.message}</p>
             </div>
             <div className="px-6 py-4 bg-gray-50 flex gap-3 justify-end border-t border-gray-100">
               {isConfirm && <button onClick={closeDialog} className="px-4 py-2 w-full rounded-lg text-gray-600 bg-white border border-gray-300 font-medium hover:bg-gray-100">ยกเลิก</button>}
               <button onClick={() => { if(config.onConfirm) config.onConfirm(); closeDialog(); }} className={`px-4 py-2 w-full rounded-lg text-white font-medium ${isError ? 'bg-red-600' : isConfirm ? 'bg-amber-500' : 'bg-blue-600'}`}>ตกลง</button>
             </div>
-          </div>
-        </div>
-      );
-    };
-
-    // --- COMPONENT: Setup URL ---
-    const SetupGASComponent = ({ onSaveUrl }) => {
-      const [url, setUrl] = useState('');
-      return (
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-          <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg text-center">
-            <div className="bg-emerald-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"><Cloud className="text-emerald-600" size={32} /></div>
-            <h1 className="text-2xl font-bold text-gray-800">เชื่อมต่อฐานข้อมูล Cloud</h1>
-            <p className="text-gray-500 text-sm mt-2 mb-6">วาง URL ของ Google Apps Script ที่ Deploy เรียบร้อยแล้ว</p>
-            <input type="text" value={url} onChange={e => setUrl(e.target.value)} className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm bg-gray-50 mb-4" placeholder="https://script.google.com/macros/s/..." />
-            <button onClick={() => onSaveUrl(url)} className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold hover:bg-emerald-700 shadow-md">บันทึกการเชื่อมต่อ (Connect)</button>
           </div>
         </div>
       );
@@ -130,258 +117,165 @@
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <div className="relative"><input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required /><Lock className="absolute left-3 top-3.5 text-gray-400" size={18} /></div>
               </div>
-              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-md">เข้าสู่ระบบ</button>
+              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all active:scale-95">เข้าสู่ระบบ</button>
             </form>
           </div>
         </div>
       );
     };
 
-    // --- COMPONENT: Goods Receipt (รับเข้า) ---
-    const GoodsReceiptComponent = ({ db, updateMultiple, getProduct, getVendor, showNotify, showAlert, showConfirm }) => {
-      const [selectedPO, setSelectedPO] = useState('');
-      const [scanInput, setScanInput] = useState('');
-      const [scannedItems, setScannedItems] = useState([]);
-      const [receiptRemark, setReceiptRemark] = useState('');
-
-      const activePOs = db.pos.filter(po => po.status === 'Pending Receipt');
-      const currentPO = db.pos.find(p => p.id === selectedPO);
-
-      const handleScan = (e) => {
-        if (e.key === 'Enter' && scanInput.trim() !== '') {
-          const inputVal = scanInput.trim();
-          setScanInput(''); 
-          const product = db.products.find(p => p.barcode === inputVal || p.id === inputVal || p.name === inputVal);
-          if (!product) return showAlert('ค้นหาไม่พบ', 'ไม่พบสินค้านี้ในระบบ', 'error');
-          const poItem = currentPO.items.find(i => !i.isCustom && i.productId === product.id);
-          if (!poItem) return showAlert('ผิดพลาด', 'สินค้านี้ไม่ได้อยู่ในใบ PO ที่กำลังรับเข้า', 'error');
-          
-          const existingScan = scannedItems.find(i => !i.isCustom && i.productId === product.id);
-          const currentScannedQty = existingScan ? existingScan.qty : 0;
-          if (currentScannedQty + 1 > poItem.expectedQty - poItem.receivedQty) return showAlert('จำนวนเกิน', 'รับสินค้าเกินจำนวนที่สั่งในเอกสาร PO แล้ว', 'error');
-
-          if (existingScan) setScannedItems(scannedItems.map(i => (!i.isCustom && i.productId === product.id) ? { ...i, qty: i.qty + 1 } : i));
-          else setScannedItems([...scannedItems, { isCustom: false, productId: product.id, qty: 1 }]);
-        }
-      };
-
-      const confirmReceipt = () => {
-        if (scannedItems.length === 0) return;
-        showConfirm('ยืนยันรับเข้าสต๊อก', 'ระบบจะทำการบวกจำนวนสินค้าเข้าคลัง และบันทึกประวัติ ยืนยันทำรายการ?', () => {
-          let updatedPOs = [...db.pos];
-          let poIndex = updatedPOs.findIndex(p => p.id === currentPO.id);
-          let updatedPO = JSON.parse(JSON.stringify(updatedPOs[poIndex])); 
-          
-          let updatedProducts = [...db.products];
-          let newTransactions = [];
-          const fullReference = receiptRemark ? `${updatedPO.id} (${receiptRemark})` : updatedPO.id;
-
-          scannedItems.forEach(scan => {
-            const itemIdx = updatedPO.items.findIndex(i => scan.isCustom ? i.customName === scan.customName : i.productId === scan.productId);
-            if (itemIdx > -1) updatedPO.items[itemIdx].receivedQty += scan.qty;
-
-            if (!scan.isCustom) {
-                const prodIdx = updatedProducts.findIndex(p => p.id === scan.productId);
-                if (prodIdx > -1) updatedProducts[prodIdx] = {...updatedProducts[prodIdx], stock: updatedProducts[prodIdx].stock + scan.qty};
-                newTransactions.push({ id: `TXN-${Date.now()}-${Math.floor(Math.random()*1000)}`, type: 'IN', date: new Date().toISOString(), productId: scan.productId, qty: scan.qty, referenceNo: fullReference });
-            } else {
-                newTransactions.push({ id: `TXN-${Date.now()}-${Math.floor(Math.random()*1000)}`, type: 'IN', date: new Date().toISOString(), productId: `(นอกระบบ) ${scan.customName}`, qty: scan.qty, referenceNo: fullReference });
-            }
-          });
-
-          updatedPO.status = updatedPO.items.every(i => i.receivedQty >= i.expectedQty) ? 'Completed' : 'Pending Receipt';
-          updatedPOs[poIndex] = updatedPO;
-
-          // 🔥 อัปเดต 3 ฐานข้อมูลพร้อมกันแบบ Transaction เพื่อป้องกันระบบรวนบน Cloud 🔥
-          updateMultiple({ pos: updatedPOs, products: updatedProducts, transactions: [...newTransactions, ...db.transactions] });
-          
-          setSelectedPO(''); setScannedItems([]); setReceiptRemark('');
-          showNotify('รับเข้าสินค้าเรียบร้อยแล้ว', 'success');
-        });
-      };
-
-      if(!selectedPO) return (
-        <div className="bg-white p-10 rounded-2xl shadow-sm border text-center">
-          <div className="bg-emerald-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><PackagePlus size={40} className="text-emerald-600" /></div>
-          <h3 className="text-xl font-bold mb-2">เตรียมรับสินค้าเข้าคลัง</h3>
-          <select className="w-full max-w-lg mx-auto block border-2 border-emerald-100 rounded-xl p-4 font-bold text-gray-700 outline-none focus:border-emerald-500" value={selectedPO} onChange={(e) => setSelectedPO(e.target.value)}>
-            <option value="">-- เลือกใบ PO ที่รอรับของ --</option>
-            {activePOs.map(po => <option key={po.id} value={po.id}>{po.id} - {getVendor(po.vendorId)?.name}</option>)}
-          </select>
-        </div>
-      );
-
+    // --- COMPONENT: Dashboard ---
+    const Dashboard = ({ db, changeTab, currentUser, perms }) => {
+      const { prs, pos, products, transactions } = db;
+      const lowStock = products.filter(p => p.stock <= p.minStock).length;
       return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100"><label className="block text-blue-900 font-bold mb-3"><Barcode className="inline mr-2" /> สแกนบาร์โค้ด / รหัส / ชื่อ</label><input type="text" value={scanInput} onChange={(e)=>setScanInput(e.target.value)} onKeyDown={handleScan} placeholder="ยิงบาร์โค้ด แล้วกด Enter" className="w-full p-4 text-xl font-mono border-2 border-blue-200 rounded-xl outline-none focus:border-blue-500" autoFocus /></div>
-            <div className="bg-white rounded-2xl shadow-sm border overflow-x-auto"><table className="w-full text-left"><thead className="bg-gray-50 text-gray-500 text-xs uppercase"><tr><th className="p-4">สินค้า</th><th className="p-4 text-center">สั่ง (PO)</th><th className="p-4 text-center">รับแล้ว</th><th className="p-4 text-center">รับเพิ่ม</th><th className="p-4 text-center">จัดการ</th></tr></thead><tbody>
-              {currentPO.items.map((item, idx) => {
-                const scanItem = scannedItems.find(i => item.isCustom ? i.customName === item.customName : i.productId === item.productId);
-                const scanQty = scanItem ? scanItem.qty : 0;
-                return (
-                  <tr key={idx} className="border-t hover:bg-gray-50"><td className="p-4 font-bold text-sm">{item.isCustom ? item.customName : getProduct(item.productId)?.name}</td><td className="p-4 text-center">{item.expectedQty}</td><td className="p-4 text-center">{item.receivedQty}</td><td className="p-4 text-center font-bold text-emerald-600">{scanQty > 0 ? `+${scanQty}` : '-'}</td>
-                  <td className="p-4 text-center"><button onClick={()=>{
-                      const n = parseInt(prompt(`ระบุจำนวนที่ต้องการรับ (สูงสุด ${item.expectedQty - item.receivedQty})`, 1));
-                      if(n > 0 && n <= item.expectedQty - item.receivedQty) {
-                        const newScans = scannedItems.filter(i => item.isCustom ? i.customName !== item.customName : i.productId !== item.productId);
-                        setScannedItems([...newScans, { isCustom: item.isCustom, productId: item.productId, customName: item.customName, qty: n }]);
-                      }
-                  }} className="text-xs bg-slate-100 px-3 py-1.5 rounded-lg border hover:bg-slate-200 font-bold">รับมือ</button></td></tr>
-                )
-              })}
-            </tbody></table></div>
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+             <div className="relative z-10">
+                <h2 className="text-3xl font-bold mb-2">ยินดีต้อนรับ, {currentUser.name}</h2>
+                <p className="text-blue-100 mb-6">เลือกระบบการทำงานที่คุณต้องการด้านล่าง</p>
+                <div className="flex flex-wrap gap-3">
+                  {perms.canCreatePR && <button onClick={()=>changeTab('pr')} className="bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-lg font-medium flex items-center"><Plus size={18} className="mr-2" /> สร้างใบ PR</button>}
+                  {perms.canManageInventory && (
+                    <><button onClick={()=>changeTab('gr')} className="bg-emerald-500/80 hover:bg-emerald-500 px-4 py-2.5 rounded-lg font-medium flex items-center"><PackagePlus size={18} className="mr-2" /> รับเข้า</button>
+                    <button onClick={()=>changeTab('issue')} className="bg-amber-500/80 hover:bg-amber-500 px-4 py-2.5 rounded-lg font-medium flex items-center"><PackageMinus size={18} className="mr-2" /> เบิกออก</button></>
+                  )}
+                </div>
+             </div>
+             <Layers size={200} className="absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10" />
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border h-fit"><h3 className="font-bold mb-4">สรุปการรับเข้า</h3><textarea rows="3" value={receiptRemark} onChange={e=>setReceiptRemark(e.target.value)} placeholder="หมายเหตุเพิ่มเติม..." className="w-full border rounded-xl p-3 mb-4 text-sm bg-gray-50"/><button onClick={confirmReceipt} disabled={scannedItems.length === 0} className={`w-full py-4 rounded-xl font-bold flex items-center justify-center text-white ${scannedItems.length > 0 ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-gray-300'}`}><PackagePlus className="mr-2"/> ยืนยันนำเข้าสต๊อก</button></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer" onClick={()=>changeTab('pr')}>
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24}/></div>
+              <div><p className="text-sm text-gray-500">PR รอดำเนินการ</p><p className="text-2xl font-black">{prs.filter(p=>p.status==='Pending').length}</p></div>
+            </div>
+            {perms.canCreatePO && <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer" onClick={()=>changeTab('po')}>
+              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><ShoppingCart size={24}/></div>
+              <div><p className="text-sm text-gray-500">PO รอรับของ</p><p className="text-2xl font-black">{pos.filter(p=>p.status==='Pending Receipt').length}</p></div>
+            </div>}
+            {perms.canManageInventory && <>
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer" onClick={()=>changeTab('stock')}>
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><Layers size={24}/></div>
+                <div><p className="text-sm text-gray-500">สินค้าในคลัง</p><p className="text-2xl font-black">{products.length}</p></div>
+              </div>
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer" onClick={()=>changeTab('stock')}>
+                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><AlertTriangle size={24}/></div>
+                <div><p className="text-sm text-gray-500">ใกล้หมด/หมด</p><p className="text-2xl font-black">{lowStock}</p></div>
+              </div>
+            </>}
+          </div>
         </div>
       );
     };
 
-    // --- COMPONENT: Goods Issue (เบิกจ่าย) ---
-    const GoodsIssueComponent = ({ db, updateMultiple, getProduct, showNotify, showAlert, showConfirm }) => {
-      const [scanInput, setScanInput] = useState('');
-      const [issueItems, setIssueItems] = useState([]);
-      const [reference, setReference] = useState('');
-      const [issueRemark, setIssueRemark] = useState(''); 
-      const [manualProduct, setManualProduct] = useState(''); 
+    // --- COMPONENT: PR ---
+    const PRComponent = ({ db, updateDb, showNotify, showAlert, showConfirm, currentUser, perms }) => {
+      const [view, setView] = useState('list');
+      const [newPR, setNewPR] = useState({ requester: currentUser.name, items: [] });
+      const [itemInput, setItemInput] = useState({ productId: '', customName: '', qty: '', unit: 'ชิ้น', remark: '' });
+      const [isCustom, setIsCustom] = useState(false);
 
-      const addIssueItem = (product) => {
-        const existingItem = issueItems.find(i => i.productId === product.id);
-        const currentReqQty = existingItem ? existingItem.qty : 0;
-        if (currentReqQty + 1 > product.stock) return showAlert('สต๊อกไม่พอ', `สินค้า ${product.name} มีสต๊อกคงเหลือเพียง ${product.stock}`, 'error');
-        if (existingItem) setIssueItems(issueItems.map(i => i.productId === product.id ? { ...i, qty: i.qty + 1 } : i));
-        else setIssueItems([...issueItems, { productId: product.id, qty: 1 }]);
-      };
-
-      const handleScan = (e) => {
-        if (e.key === 'Enter' && scanInput.trim() !== '') {
-          const product = db.products.find(p => p.barcode === scanInput.trim() || p.id === scanInput.trim() || p.name === scanInput.trim());
-          setScanInput(''); 
-          if (!product) return showAlert('ค้นหาไม่พบ', 'ไม่พบสินค้านี้ในระบบ', 'error');
-          addIssueItem(product);
-        }
-      };
-
-      const confirmIssue = () => {
-        if (issueItems.length === 0 || !reference) return showAlert('ข้อมูลไม่ครบ', 'กรุณาระบุ ผู้เบิก/อ้างอิง และสแกนสินค้า', 'error');
-        showConfirm('ยืนยันตัดสต๊อก', `ต้องการเบิกสินค้าจำนวน ${issueItems.length} รายการใช่หรือไม่?`, () => {
-          let updatedProducts = [...db.products];
-          let newTransactions = [];
-          const fullRef = issueRemark ? `${reference} (${issueRemark})` : reference;
-
-          issueItems.forEach(item => {
-            const prodIdx = updatedProducts.findIndex(p => p.id === item.productId);
-            updatedProducts[prodIdx] = {...updatedProducts[prodIdx], stock: updatedProducts[prodIdx].stock - item.qty};
-            newTransactions.push({ id: `TXN-${Date.now()}-${Math.floor(Math.random()*1000)}`, type: 'OUT', date: new Date().toISOString(), productId: item.productId, qty: item.qty, referenceNo: fullRef });
-          });
-
-          updateMultiple({ products: updatedProducts, transactions: [...newTransactions, ...db.transactions] });
-          setIssueItems([]); setReference(''); setIssueRemark(''); showNotify('เบิกจ่ายสินค้าสำเร็จ');
+      const handleCreatePR = () => {
+        if (!newPR.items.length) return showAlert('ผิดพลาด', 'กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error');
+        showConfirm('ยืนยัน', 'ต้องการบันทึกใบ PR หรือไม่?', () => {
+          const prId = `PR-${Date.now().toString().slice(-6)}`;
+          updateDb('prs', [{id: prId, date: new Date().toISOString().split('T')[0], requester: newPR.requester, status: 'Pending', items: newPR.items}, ...db.prs]);
+          setView('list'); setNewPR({ requester: currentUser.name, items: [] }); showNotify('สร้างใบ PR สำเร็จ');
         });
       };
 
-      return (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <label className="block text-sm font-bold text-gray-700 mb-2">ผู้เบิก / เลขที่ใบเบิก / แผนก <span className="text-red-500">*</span></label>
-              <input type="text" value={reference} onChange={e=>setReference(e.target.value)} placeholder="เช่น JOB-2026-001" className="w-full border-2 border-amber-100 rounded-xl p-3 focus:ring-4 focus:ring-amber-50 focus:border-amber-400 bg-amber-50/20 font-bold" />
-              
-              <div className="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label className="block font-bold text-amber-800 mb-2">สแกนบาร์โค้ด</label><input type="text" value={scanInput} onChange={e=>setScanInput(e.target.value)} onKeyDown={handleScan} placeholder="ยิงบาร์โค้ด/รหัส..." className="w-full p-3 font-mono border-2 border-amber-200 rounded-lg focus:border-amber-500" /></div>
-                <div><label className="block font-bold text-gray-700 mb-2">เลือกด้วยมือ</label>
-                  <div className="flex gap-2">
-                    <input type="text" list="man-list" value={manualProduct} onChange={e=>setManualProduct(e.target.value)} className="w-full border rounded-lg p-3" placeholder="พิมพ์ชื่อสินค้า..." />
-                    <datalist id="man-list">{db.products.filter(p=>p.stock>0).map(p=><option key={p.id} value={p.id}>{p.name} (เหลือ {p.stock})</option>)}</datalist>
-                    <button onClick={()=>{if(!manualProduct)return; const p=getProduct(manualProduct); if(p)addIssueItem(p); setManualProduct('');}} className="bg-slate-800 text-white px-4 rounded-lg"><Plus size={20}/></button>
-                  </div>
-                </div>
+      const addItem = () => {
+        if ((!isCustom && !itemInput.productId) || (isCustom && !itemInput.customName) || !itemInput.qty) return showAlert('ผิดพลาด', 'กรอกข้อมูลไม่ครบ', 'error');
+        setNewPR({...newPR, items: [...newPR.items, { ...itemInput, isCustom, qty: parseInt(itemInput.qty) }]});
+        setItemInput({ productId: '', customName: '', qty: '', unit: 'ชิ้น', remark: '' });
+      };
+
+      if (view === 'create') {
+        return (
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex justify-between mb-4"><h2 className="text-xl font-bold">สร้างใบขอซื้อ (PR)</h2><button onClick={()=>setView('list')} className="text-gray-500">กลับ</button></div>
+            <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-xl mb-4">
+              <div className="flex justify-between mb-2"><h3 className="font-bold">เพิ่มสินค้า</h3><label><input type="checkbox" checked={isCustom} onChange={e=>setIsCustom(e.target.checked)} className="mr-1"/> พิมพ์นอกระบบ</label></div>
+              <div className="flex gap-2">
+                {!isCustom ? <select className="flex-1 p-2 border rounded" value={itemInput.productId} onChange={e=>setItemInput({...itemInput, productId: e.target.value})}><option value="">- เลือก -</option>{db.products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select> : <input type="text" className="flex-1 p-2 border rounded" placeholder="ชื่อสินค้า..." value={itemInput.customName} onChange={e=>setItemInput({...itemInput, customName: e.target.value})} />}
+                <input type="number" className="w-20 p-2 border rounded" placeholder="จำนวน" value={itemInput.qty} onChange={e=>setItemInput({...itemInput, qty: e.target.value})} />
+                <button onClick={addItem} className="bg-blue-600 text-white px-4 rounded">เพิ่ม</button>
               </div>
             </div>
-            {issueItems.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border overflow-hidden"><table className="w-full text-left text-sm"><thead className="bg-gray-50 border-b"><tr><th className="p-4">สินค้า</th><th className="p-4 text-center">คงเหลือ</th><th className="p-4 text-center">เบิก</th><th className="p-4 text-center">ลบ</th></tr></thead>
-              <tbody>{issueItems.map((it, idx) => {
-                const p = getProduct(it.productId);
-                return <tr key={idx} className="border-b hover:bg-gray-50"><td className="p-4 font-bold">{p.name} <span className="block text-xs text-gray-400 font-normal">{p.id}</span></td><td className="p-4 text-center">{p.stock}</td><td className="p-4 text-center font-bold text-amber-600">{it.qty}</td><td className="p-4 text-center"><button onClick={()=>setIssueItems(issueItems.filter(i=>i.productId!==it.productId))} className="text-red-500"><Trash2 size={16}/></button></td></tr>
-              })}</tbody></table></div>
+            {newPR.items.length > 0 && (
+              <table className="w-full text-sm mb-4">
+                <thead className="bg-gray-100"><tr><th className="p-2">สินค้า</th><th className="p-2 text-right">จำนวน</th><th className="p-2 text-center">ลบ</th></tr></thead>
+                <tbody>{newPR.items.map((it, i) => <tr key={i} className="border-b"><td className="p-2">{it.isCustom ? it.customName : db.products.find(p=>p.id===it.productId)?.name}</td><td className="p-2 text-right">{it.qty}</td><td className="p-2 text-center text-red-500 cursor-pointer" onClick={()=>setNewPR({...newPR, items: newPR.items.filter((_, idx)=>idx!==i)})}>X</td></tr>)}</tbody>
+              </table>
             )}
+            <button onClick={handleCreatePR} className="bg-emerald-500 text-white w-full p-3 rounded-lg font-bold">บันทึก PR</button>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border h-fit"><h3 className="font-bold mb-4">สรุปการเบิกจ่าย</h3><textarea rows="3" value={issueRemark} onChange={e=>setIssueRemark(e.target.value)} placeholder="หมายเหตุ..." className="w-full border rounded-xl p-3 mb-4 text-sm bg-gray-50"/><button onClick={confirmIssue} disabled={issueItems.length === 0 || !reference} className={`w-full py-4 rounded-xl font-bold flex items-center justify-center text-white ${issueItems.length > 0 && reference ? 'bg-amber-500 hover:bg-amber-600' : 'bg-gray-300'}`}><PackageMinus className="mr-2"/> ยืนยันตัดสต๊อก</button></div>
+        );
+      }
+
+      return (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center"><h2 className="text-xl font-bold">ใบขอซื้อ (PR)</h2>{perms.canCreatePR && <button onClick={()=>setView('create')} className="bg-blue-600 text-white px-4 py-2 rounded-lg">+ สร้าง PR</button>}</div>
+          <div className="bg-white border rounded-xl overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50"><tr><th className="p-3">เลขที่</th><th className="p-3">ผู้ขอ</th><th className="p-3">สถานะ</th>{perms.canApprovePR && <th className="p-3">จัดการ</th>}</tr></thead>
+              <tbody>
+                {db.prs.map(pr => (
+                  <tr key={pr.id} className="border-t">
+                    <td className="p-3 font-bold">{pr.id}</td><td className="p-3">{pr.requester}</td>
+                    <td className="p-3"><span className={`px-2 py-1 rounded-full text-xs font-bold ${pr.status==='Approved'?'bg-emerald-100 text-emerald-700':pr.status==='Rejected'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}`}>{pr.status}</span></td>
+                    {perms.canApprovePR && <td className="p-3">
+                      {pr.status === 'Pending' && <><button onClick={()=>updateDb('prs', db.prs.map(p=>p.id===pr.id?{...p,status:'Approved'}:p))} className="text-emerald-600 mr-2">อนุมัติ</button><button onClick={()=>updateDb('prs', db.prs.map(p=>p.id===pr.id?{...p,status:'Rejected'}:p))} className="text-red-500">ปฏิเสธ</button></>}
+                    </td>}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     };
 
-    // --- COMPONENT: Settings & Users ---
-    const SettingsComponent = ({ db, updateDb, showNotify, showConfirm, showAlert }) => {
-      const [subTab, setSubTab] = useState('users');
-      const [modal, setModal] = useState({ open: false, type: '', data: null });
+    // --- COMPONENT: PO ---
+    const POComponent = ({ db, updateDb, showNotify, showAlert, showConfirm }) => {
+      const [selectedPR, setSelectedPR] = useState('');
+      const [selectedVendor, setSelectedVendor] = useState('');
+      const approvedPRs = db.prs.filter(pr => pr.status === 'Approved' && !db.pos.find(po => po.prId === pr.id));
 
-      const saveUser = () => {
-        if(!modal.data.username || !modal.data.name) return showAlert('ผิดพลาด', 'กรอกข้อมูลให้ครบ', 'error');
-        if(modal.data.isEdit) updateDb('users', db.users.map(u => u.id === modal.data.id ? modal.data : u));
-        else updateDb('users', [...db.users, { ...modal.data, id: `U00${db.users.length+1}` }]);
-        setModal({open: false}); showNotify('บันทึกสำเร็จ');
-      };
-
-      const saveVendor = () => {
-        if(!modal.data.name) return showAlert('ผิดพลาด', 'กรอกชื่อซัพพลายเออร์', 'error');
-        if(modal.data.isEdit) updateDb('vendors', db.vendors.map(v => v.id === modal.data.id ? modal.data : v));
-        else updateDb('vendors', [...db.vendors, { ...modal.data, id: `V00${db.vendors.length+1}` }]);
-        setModal({open: false}); showNotify('บันทึกสำเร็จ');
+      const createPO = () => {
+        if (!selectedPR || !selectedVendor) return showAlert('ผิดพลาด', 'เลือก PR และร้านค้า', 'error');
+        showConfirm('สร้าง PO', 'ยืนยันสร้างใบสั่งซื้อ?', () => {
+          const pr = db.prs.find(p => p.id === selectedPR);
+          const poId = `PO-${Date.now().toString().slice(-6)}`;
+          const items = pr.items.map(it => ({ ...it, expectedQty: it.qty, receivedQty: 0, price: 0 }));
+          updateDb('pos', [{ id: poId, prId: pr.id, vendorId: selectedVendor, date: new Date().toISOString().split('T')[0], status: 'Pending Receipt', items }, ...db.pos]);
+          showNotify('สร้าง PO สำเร็จ'); setSelectedPR('');
+        });
       };
 
       return (
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold">ตั้งค่าระบบ (Settings)</h2>
-          <div className="flex space-x-2 border-b"><button onClick={()=>setSubTab('users')} className={`px-5 py-3 font-bold border-b-2 ${subTab==='users'?'border-blue-600 text-blue-600':''}`}><Users size={16} className="inline mr-1"/> ผู้ใช้งาน</button><button onClick={()=>setSubTab('vendors')} className={`px-5 py-3 font-bold border-b-2 ${subTab==='vendors'?'border-blue-600 text-blue-600':''}`}><Database size={16} className="inline mr-1"/> ร้านค้า/ซัพพลายเออร์</button></div>
-          
-          {subTab === 'users' && (
-            <div className="bg-white rounded-2xl shadow-sm border p-4">
-              <div className="text-right mb-4"><button onClick={()=>setModal({open:true, type:'user', data:{username:'',password:'',name:'',role:'Requester',department:'',isEdit:false}})} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">+ เพิ่มผู้ใช้งาน</button></div>
-              <table className="w-full text-left text-sm border-t"><thead className="bg-gray-50"><tr><th className="p-3">Username</th><th className="p-3">ชื่อพนักงาน</th><th className="p-3">สิทธิ์</th><th className="p-3">จัดการ</th></tr></thead>
-              <tbody>{db.users.map(u => <tr key={u.id} className="border-t"><td className="p-3 font-bold text-blue-600">{u.username}</td><td className="p-3">{u.name}</td><td className="p-3 font-bold">{u.role}</td><td className="p-3 flex gap-2"><button onClick={()=>setModal({open:true, type:'user', data:{...u, isEdit:true}})} className="text-amber-500"><Edit size={16}/></button><button onClick={()=>showConfirm('ลบ', 'ลบผู้ใช้?', ()=>updateDb('users', db.users.filter(x=>x.id!==u.id)))} disabled={u.id==='U001'} className="text-red-500 disabled:text-gray-300"><Trash2 size={16}/></button></td></tr>)}</tbody></table>
-            </div>
-          )}
-
-          {subTab === 'vendors' && (
-            <div className="bg-white rounded-2xl shadow-sm border p-4">
-              <div className="text-right mb-4"><button onClick={()=>setModal({open:true, type:'vendor', data:{name:'',contact:'',term:'Cash',isEdit:false}})} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold">+ เพิ่มร้านค้า</button></div>
-              <table className="w-full text-left text-sm border-t"><thead className="bg-gray-50"><tr><th className="p-3">รหัส</th><th className="p-3">ชื่อร้านค้า/บริษัท</th><th className="p-3">ติดต่อ</th><th className="p-3">จัดการ</th></tr></thead>
-              <tbody>{db.vendors.map(v => <tr key={v.id} className="border-t"><td className="p-3 font-bold text-indigo-600">{v.id}</td><td className="p-3">{v.name}</td><td className="p-3">{v.contact}</td><td className="p-3 flex gap-2"><button onClick={()=>setModal({open:true, type:'vendor', data:{...v, isEdit:true}})} className="text-amber-500"><Edit size={16}/></button><button onClick={()=>showConfirm('ลบ', 'ลบร้านค้านี้?', ()=>updateDb('vendors', db.vendors.filter(x=>x.id!==v.id)))} className="text-red-500"><Trash2 size={16}/></button></td></tr>)}</tbody></table>
-            </div>
-          )}
-
-          {/* Simple Modal for Users/Vendors */}
-          {modal.open && (
-            <div className="fixed inset-0 bg-black/50 z-[150] flex items-center justify-center p-4">
-              <div className="bg-white p-6 rounded-xl w-full max-w-md space-y-4">
-                <h3 className="font-bold text-lg">{modal.data.isEdit ? 'แก้ไข' : 'เพิ่ม'}{modal.type === 'user' ? 'ผู้ใช้งาน' : 'ซัพพลายเออร์'}</h3>
-                {modal.type === 'user' ? (
-                  <>
-                    <input type="text" placeholder="Username *" className="w-full border p-2 rounded" value={modal.data.username} onChange={e=>setModal({...modal, data:{...modal.data, username: e.target.value}})} disabled={modal.data.id==='U001'} />
-                    <input type="text" placeholder="Password *" className="w-full border p-2 rounded" value={modal.data.password} onChange={e=>setModal({...modal, data:{...modal.data, password: e.target.value}})} />
-                    <input type="text" placeholder="ชื่อ-นามสกุล *" className="w-full border p-2 rounded" value={modal.data.name} onChange={e=>setModal({...modal, data:{...modal.data, name: e.target.value}})} />
-                    <select className="w-full border p-2 rounded" value={modal.data.role} onChange={e=>setModal({...modal, data:{...modal.data, role: e.target.value}})} disabled={modal.data.id==='U001'}><option value="Requester">Requester</option><option value="Purchaser">Purchaser</option><option value="Store">Store</option><option value="Admin">Admin</option></select>
-                  </>
-                ) : (
-                  <>
-                    <input type="text" placeholder="ชื่อบริษัท/ร้านค้า *" className="w-full border p-2 rounded" value={modal.data.name} onChange={e=>setModal({...modal, data:{...modal.data, name: e.target.value}})} />
-                    <input type="text" placeholder="ข้อมูลติดต่อ" className="w-full border p-2 rounded" value={modal.data.contact} onChange={e=>setModal({...modal, data:{...modal.data, contact: e.target.value}})} />
-                    <select className="w-full border p-2 rounded" value={modal.data.term} onChange={e=>setModal({...modal, data:{...modal.data, term: e.target.value}})}><option value="Cash">Cash (เงินสด)</option><option value="30 Days">30 Days</option></select>
-                  </>
-                )}
-                <div className="flex justify-end gap-2 mt-4"><button onClick={()=>setModal({open:false})} className="px-4 py-2 bg-gray-100 rounded font-bold text-gray-600">ยกเลิก</button><button onClick={modal.type==='user'?saveUser:saveVendor} className="px-4 py-2 bg-blue-600 text-white rounded font-bold">บันทึก</button></div>
-              </div>
-            </div>
-          )}
+          <div className="bg-white p-6 rounded-xl border shadow-sm flex gap-4 items-end">
+            <div className="flex-1"><label className="block text-sm font-bold mb-1">เลือก PR ที่อนุมัติ</label><select className="w-full p-2 border rounded" value={selectedPR} onChange={e=>setSelectedPR(e.target.value)}><option value="">- เลือก PR -</option>{approvedPRs.map(p=><option key={p.id} value={p.id}>{p.id}</option>)}</select></div>
+            <div className="flex-1"><label className="block text-sm font-bold mb-1">เลือกร้านค้า</label><select className="w-full p-2 border rounded" value={selectedVendor} onChange={e=>setSelectedVendor(e.target.value)}><option value="">- เลือกร้านค้า -</option>{db.vendors.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select></div>
+            <button onClick={createPO} className="bg-indigo-600 text-white px-6 py-2 rounded font-bold">ออก PO</button>
+          </div>
+          <div className="bg-white border rounded-xl overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50"><tr><th className="p-3">เลข PO</th><th className="p-3">อ้างอิง PR</th><th className="p-3">ร้านค้า</th><th className="p-3">สถานะ</th></tr></thead>
+              <tbody>
+                {db.pos.map(po => (
+                  <tr key={po.id} className="border-t"><td className="p-3 font-bold text-indigo-600">{po.id}</td><td className="p-3">{po.prId}</td><td className="p-3">{db.vendors.find(v=>v.id===po.vendorId)?.name}</td><td className="p-3">{po.status === 'Completed' ? <span className="text-emerald-600 font-bold">รับครบแล้ว</span> : <span className="text-blue-600 font-bold">รอรับของ</span>}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     };
 
     // --- MAIN APP (STATE CONTROLLER) ---
     const App = () => {
-      const [gasUrl, setGasUrl] = useState(YOUR_GAS_URL || localStorage.getItem('procure_gas_url') || '');
-      const [isSetup, setIsSetup] = useState(!!gasUrl);
       const [db, setDb] = useState(null);
       const [currentUser, setCurrentUser] = useState(null); 
       const [activeTab, setActiveTab] = useState('dashboard'); 
@@ -390,21 +284,38 @@
       const [dialogConfig, setDialogConfig] = useState({ isOpen: false });
       const [isSyncing, setIsSyncing] = useState(false);
 
+      // เริ่มการดึงข้อมูลทันที
       useEffect(() => {
-        if (isSetup && gasUrl) fetchDataFromCloud();
-      }, [isSetup]);
+        if(YOUR_GAS_URL) fetchDataFromCloud();
+      }, []);
 
       const fetchDataFromCloud = async () => {
         try {
           setIsSyncing(true);
-          const response = await fetch(gasUrl);
-          const data = await response.json();
+          // ใช้โหมด no-cors ไม่ได้เพราะเราต้องการ JSON ตอบกลับ, 
+          // หากติดปัญหา CORS สีแดง แปลว่าตั้งค่า Who has Access ไม่ถูกต้องใน GAS 
+          const response = await fetch(YOUR_GAS_URL, { redirect: "follow" });
+          
+          if(response.redirected && response.url.includes("ServiceLogin")) {
+            throw new Error("AUTH_REQUIRED");
+          }
+
+          const text = await response.text();
+          const data = JSON.parse(text || "{}");
+
           if (Object.keys(data).length === 0) {
             setDb(initData); await syncToCloud(initData);
-          } else setDb(data);
+          } else {
+            setDb(data);
+          }
           setIsSyncing(false);
         } catch (error) {
-          showAlert('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูล Cloud ได้ (ตรวจสอบ URL)', 'error');
+          console.error("Fetch error:", error);
+          if(error.message === "AUTH_REQUIRED") {
+            showAlert('ติดสิทธิ์องค์กร (CORS Error)', 'กรุณากลับไปที่ Apps Script แล้วตอนกด Deploy ให้เลือก [Who has access: Anyone] หรือใช้ Gmail ส่วนตัวทำ Backend ครับ', 'error');
+          } else {
+            showAlert('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูล Cloud ได้ โปรดตรวจสอบ URL', 'error');
+          }
           setIsSyncing(false);
         }
       };
@@ -412,30 +323,23 @@
       const syncToCloud = async (newData) => {
         try {
           setIsSyncing(true);
-          await fetch(gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(newData) });
+          await fetch(YOUR_GAS_URL, { 
+            method: 'POST', 
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify(newData) 
+          });
           setIsSyncing(false);
         } catch (error) {
-          showAlert('แจ้งเตือน', 'ซิงค์ข้อมูลล้มเหลว', 'error');
+          console.error("Sync error:", error);
+          showAlert('แจ้งเตือน', 'ซิงค์ข้อมูลลง Cloud ล้มเหลว', 'error');
           setIsSyncing(false);
         }
       };
 
-      // ฟังก์ชันสำหรับอัปเดต 1 คอลเลกชัน (เช่น Users, PRs)
       const updateDb = (collectionName, newCollectionData) => {
         const newDb = { ...db, [collectionName]: newCollectionData };
         setDb(newDb); syncToCloud(newDb);
-      };
-
-      // ฟังก์ชันสำหรับอัปเดตหลายคอลเลกชันพร้อมกัน (ใช้ตอนรับเข้า/เบิกจ่าย เพื่อป้องกัน DB รวน)
-      const updateMultiple = (updatesObj) => {
-        const newDb = { ...db, ...updatesObj };
-        setDb(newDb); syncToCloud(newDb);
-      };
-
-      const handleSaveUrl = (url) => {
-        if(!url.includes('script.google.com')) return alert('URL ไม่ถูกต้อง');
-        localStorage.setItem('procure_gas_url', url);
-        setGasUrl(url); setIsSetup(true);
       };
 
       const showAlert = (title, message, type = 'info') => setDialogConfig({ isOpen: true, type, title, message });
@@ -444,79 +348,47 @@
       const showNotify = (msg, type = 'success') => { setNotification({ msg, type }); setTimeout(() => setNotification(null), 3000); };
       const changeTab = (tab) => { setActiveTab(tab); setSidebarOpen(false); };
 
-      if (!isSetup) return <SetupGASComponent onSaveUrl={handleSaveUrl} />;
-      if (!db) return <div className="h-screen flex flex-col items-center justify-center bg-slate-50"><RefreshCw className="animate-spin text-blue-600 mb-4" size={48} /><h2 className="text-xl font-bold">เชื่อมต่อ Cloud Database...</h2></div>;
+      if (!YOUR_GAS_URL) return <div className="h-screen flex items-center justify-center flex-col text-red-500 font-bold p-10 text-center"><AlertTriangle size={64} className="mb-4"/><h2>โปรดนำ URL จาก Apps Script มาใส่ตรงบรรทัด YOUR_GAS_URL ในโค้ดก่อนครับ</h2></div>;
+      if (!db) return <div className="h-screen flex flex-col items-center justify-center bg-slate-50"><RefreshCw className="animate-spin text-blue-600 mb-4" size={48} /><h2 className="text-xl font-bold">กำลังเชื่อมต่อฐานข้อมูล Cloud...</h2></div>;
       if (!currentUser) return <><LoginComponent onLogin={setCurrentUser} users={db.users} showAlert={showAlert} /><CustomDialog config={dialogConfig} closeDialog={closeDialog} /></>;
 
       const perms = getPermissions(currentUser.role);
       const getProduct = (id) => db.products.find(p => p.id === id);
-      const getProductByBarcode = (barcode) => db.products.find(p => p.barcode === barcode);
-      const getVendor = (id) => db.vendors.find(v => v.id === id);
 
       return (
         <div className="flex h-screen w-full bg-slate-50 font-sans overflow-hidden">
-          {/* Cloud Sync Status */}
-          <div className="fixed top-4 right-4 z-[150] bg-white/90 backdrop-blur rounded-full px-4 py-2 shadow-sm border border-gray-200 flex items-center print:hidden">
-            {isSyncing ? <><RefreshCw size={16} className="animate-spin text-blue-500 mr-2"/><span className="text-xs font-bold text-gray-600">กำลังซิงค์ (Syncing)</span></> : 
-                         <><Cloud size={16} className="text-emerald-500 mr-2"/><span className="text-xs font-bold text-gray-600">ซิงค์แล้ว (Saved)</span></>}
+          <div className="fixed top-4 right-4 z-[150] bg-white/90 backdrop-blur rounded-full px-4 py-2 shadow-sm border border-gray-200 flex items-center">
+            {isSyncing ? <><RefreshCw size={16} className="animate-spin text-blue-500 mr-2"/><span className="text-xs font-bold text-gray-600">กำลังบันทึก (Saving)</span></> : 
+                         <><Cloud size={16} className="text-emerald-500 mr-2"/><span className="text-xs font-bold text-gray-600">ออนไลน์ (Online)</span></>}
           </div>
 
           {/* Sidebar */}
-          <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white flex flex-col h-full shadow-2xl transition-transform duration-300 transform md:relative md:translate-x-0 print:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white flex flex-col h-full transition-transform transform md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
             <div className="p-6 flex items-center space-x-3 border-b border-slate-800"><div className="bg-blue-600 p-2.5 rounded-xl"><Box size={24} /></div><h1 className="text-2xl font-black">ASIA HYDRO</h1></div>
-            <div className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto custom-scrollbar">
-              {currentUser.role !== 'Requester' && <button onClick={() => changeTab('dashboard')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='dashboard'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><Home size={20} /> <span>แดชบอร์ด</span></button>}
-              
-              {perms.canCreatePR && (
-                <><div className="text-[11px] font-black text-slate-500 uppercase mt-4 mb-2 ml-2">จัดซื้อ</div>
-                <button onClick={() => changeTab('pr')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='pr'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><FileText size={20} /> <span>ใบขอซื้อ (PR)</span></button>
-                {perms.canCreatePO && <button onClick={() => changeTab('po')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='po'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><ShoppingCart size={20} /> <span>ใบสั่งซื้อ (PO)</span></button>}
-                </>
-              )}
-              
-              {perms.canManageInventory && (
-                <><div className="text-[11px] font-black text-slate-500 uppercase mt-4 mb-2 ml-2">คลังสินค้า</div>
-                <button onClick={() => changeTab('gr')} className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='gr'?'bg-emerald-500 text-white':'text-slate-300 hover:bg-slate-800'}`}>
-                  <div className="flex items-center space-x-3"><PackagePlus size={20} /> <span>รับเข้า (สแกน)</span></div>
-                  {db.pos.filter(p=>p.status==='Pending Receipt').length > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{db.pos.filter(p=>p.status==='Pending Receipt').length}</span>}
-                </button>
-                <button onClick={() => changeTab('issue')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='issue'?'bg-amber-500 text-white':'text-slate-300 hover:bg-slate-800'}`}><PackageMinus size={20} /> <span>เบิกจ่าย (สแกน)</span></button>
-                <button onClick={() => changeTab('stock')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='stock'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><LayoutGrid size={20} /> <span>สต๊อกคงเหลือ</span></button></>
-              )}
-
-              {perms.canManageSettings && (
-                <><div className="text-[11px] font-black text-slate-500 uppercase mt-4 mb-2 ml-2">ตั้งค่าระบบ</div>
-                <button onClick={() => changeTab('settings')} className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl text-sm font-bold ${activeTab==='settings'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><Settings size={20} /> <span>จัดการระบบ/สิทธิ์ผู้ใช้</span></button></>
-              )}
+            <div className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+              {currentUser.role !== 'Requester' && <button onClick={() => changeTab('dashboard')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-bold ${activeTab==='dashboard'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><Home size={20} /> <span>แดชบอร์ด</span></button>}
+              {perms.canCreatePR && <button onClick={() => changeTab('pr')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-bold ${activeTab==='pr'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><FileText size={20} /> <span>ใบขอซื้อ (PR)</span></button>}
+              {perms.canCreatePO && <button onClick={() => changeTab('po')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-bold ${activeTab==='po'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><ShoppingCart size={20} /> <span>ใบสั่งซื้อ (PO)</span></button>}
+              {perms.canManageInventory && <button onClick={() => changeTab('stock')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-bold ${activeTab==='stock'?'bg-blue-600 text-white':'text-slate-300 hover:bg-slate-800'}`}><LayoutGrid size={20} /> <span>สต๊อกคงเหลือ</span></button>}
             </div>
-            
-            <div className="p-5 border-t border-slate-800 mt-auto bg-slate-900/50 flex justify-between items-center">
-              <div className="flex items-center space-x-3"><div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-lg">{currentUser.name.charAt(0)}</div><div className="truncate"><p className="font-bold text-sm">{currentUser.name}</p><p className="text-[10px] text-blue-400 font-bold uppercase">{currentUser.role}</p></div></div>
-              <button onClick={()=>showConfirm('ออกจากระบบ', 'ยืนยันการออกจากระบบ?', ()=>setCurrentUser(null))} className="text-slate-400 hover:text-red-400"><LogOut size={20} /></button>
+            <div className="p-5 border-t border-slate-800 flex justify-between items-center">
+              <div className="flex items-center space-x-3"><div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold">{currentUser.name.charAt(0)}</div><div><p className="font-bold text-sm">{currentUser.name}</p><p className="text-[10px] text-blue-400 font-bold uppercase">{currentUser.role}</p></div></div>
+              <button onClick={()=>showConfirm('ออกจากระบบ', 'ยืนยัน?', ()=>setCurrentUser(null))} className="text-slate-400 hover:text-red-400"><LogOut size={20} /></button>
             </div>
           </div>
 
           <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-            <header className="bg-white border-b h-16 flex items-center px-4 md:px-8 print:hidden">
-              <button onClick={() => setSidebarOpen(true)} className="md:hidden mr-4 bg-gray-50 p-2 rounded"><Menu size={24} /></button>
-              <h2 className="font-black text-gray-800 uppercase tracking-widest">{activeTab}</h2>
-            </header>
-
-            <main className="flex-1 overflow-y-auto p-4 md:p-8">
-              <div className="max-w-7xl mx-auto pb-20">
-                {activeTab === 'dashboard' && <Dashboard db={db} changeTab={changeTab} currentUser={currentUser} perms={perms} />}
-                {activeTab === 'pr' && <PRComponent db={db} updateDb={updateDb} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} currentUser={currentUser} perms={perms} products={db.products} getProduct={getProduct} />}
-                {activeTab === 'po' && <POComponent db={db} updateDb={updateDb} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} />}
-                {activeTab === 'gr' && <GoodsReceiptComponent db={db} updateMultiple={updateMultiple} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} getProduct={getProduct} getVendor={getVendor} />}
-                {activeTab === 'issue' && <GoodsIssueComponent db={db} updateMultiple={updateMultiple} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} getProduct={getProduct} />}
-                {activeTab === 'stock' && <StockComponent db={db} updateDb={updateDb} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} />}
-                {activeTab === 'settings' && <SettingsComponent db={db} updateDb={updateDb} showNotify={showNotify} showConfirm={showConfirm} showAlert={showAlert} />}
-              </div>
-            </main>
+            <header className="bg-white border-b h-16 flex items-center px-4 md:px-8"><button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden mr-4"><Menu size={24} /></button><h2 className="font-black uppercase text-gray-800">{activeTab}</h2></header>
+            <main className="flex-1 overflow-y-auto p-4 md:p-8"><div className="max-w-7xl mx-auto">
+              {activeTab === 'dashboard' && <Dashboard db={db} changeTab={changeTab} currentUser={currentUser} perms={perms} />}
+              {activeTab === 'pr' && <PRComponent db={db} updateDb={updateDb} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} currentUser={currentUser} perms={perms} />}
+              {activeTab === 'po' && <POComponent db={db} updateDb={updateDb} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} />}
+              {activeTab === 'stock' && <StockComponent db={db} updateDb={updateDb} showNotify={showNotify} showAlert={showAlert} showConfirm={showConfirm} />}
+            </div></main>
           </div>
 
           <CustomDialog config={dialogConfig} closeDialog={closeDialog} />
-          {notification && <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl flex items-center text-white text-sm font-bold z-[300] ${notification.type === 'success' ? 'bg-gray-900' : 'bg-red-600'}`}><CheckCircle2 className="mr-3" size={24} />{notification.msg}</div>}
+          {notification && <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-xl text-white text-sm font-bold z-[300] bg-gray-900`}>{notification.msg}</div>}
         </div>
       );
     }
