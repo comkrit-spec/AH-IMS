@@ -10,34 +10,32 @@
   
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap');
-    body { background-color: #f1f5f9; font-family: 'Prompt', sans-serif; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    body { background-color: #f8fafc; font-family: 'Prompt', sans-serif; overflow: hidden; }
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     
-    @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-    .animate-slide-up { animation: slideUpFade 0.4s ease-out forwards; }
+    @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+    .animate-slide-up { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     
-    .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
-    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+    .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); }
+    .hover-lift { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.15); }
     
     @media print {
-      body { background-color: white !important; }
+      body { background-color: white !important; overflow: visible !important; }
       .print-hidden { display: none !important; }
-      #main-app { overflow: visible !important; height: auto !important; display: block !important; }
+      #main-app { display: block !important; height: auto !important; overflow: visible !important; }
     }
   </style>
 </head>
-<body class="text-gray-800 h-screen overflow-hidden">
+<body class="text-slate-800">
   
   <div id="root" class="h-full w-full"></div>
 
   <script>
-    // =======================================================
-    // 🔴 วาง URL ของ GOOGLE APPS SCRIPT ของคุณตรงนี้ 🔴
-    // =======================================================
+    // 🔴 1. วาง URL ของ GOOGLE APPS SCRIPT ของคุณตรงนี้ 🔴
     window.YOUR_GAS_URL = "https://script.google.com/macros/s/AKfycbzZZXmwzaam7WLNTORANnkg9ZK7xsWfspwjpqazXMo_2PX8XGCPZUQp-8AkARZXcZCw2Q/exec"; 
 
     // --- STATE MANAGEMENT ---
@@ -83,7 +81,9 @@
       if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
         try { cursor = activeEl.selectionStart; } catch(e){}
       }
+
       document.getElementById('root').innerHTML = renderApp();
+
       if (activeId) {
         const el = document.getElementById(activeId);
         if (el) {
@@ -100,6 +100,7 @@
       let url = window.YOUR_GAS_URL || localStorage.getItem('procure_gas_url');
       if(!url) { window.isSetup = false; updateUI(); return; }
       window.isSetup = true; window.isSyncing = true; updateUI();
+      
       try {
         const res = await fetch(url, { redirect: 'follow' });
         if(res.redirected && res.url.includes("ServiceLogin")) {
@@ -118,13 +119,7 @@
       window.isSyncing = true; if(!skipUI) updateUI();
       try {
         let url = window.YOUR_GAS_URL || localStorage.getItem('procure_gas_url');
-        // 🔴 FIX: เพิ่ม headers: { 'Content-Type': 'text/plain;charset=utf-8' } เพื่อป้องกันปัญหา CORS Preflight ตอนบันทึก
-        await fetch(url, { 
-          method: 'POST', 
-          redirect: 'follow', 
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(window.DB) 
-        });
+        await fetch(url, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(window.DB) });
       } catch(e) {
         window.showAlert('แจ้งเตือน', 'บันทึกข้อมูลในเครื่องแล้ว แต่ซิงค์ขึ้น Cloud ล้มเหลว', 'error');
       }
@@ -164,12 +159,12 @@
 
       const perms = getPerms();
       return `
-        <div class="flex h-screen w-full bg-slate-100 overflow-hidden print-hidden">
+        <div class="flex h-screen w-full bg-slate-50 overflow-hidden print-hidden">
           ${htmlSyncStatus()}
           ${htmlSidebar(perms)}
           <div class="flex-1 flex flex-col h-full relative w-full overflow-hidden">
             ${htmlHeader()}
-            <main class="flex-1 overflow-y-auto p-4 md:p-8 relative custom-scrollbar">
+            <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 relative custom-scrollbar">
               <div class="max-w-7xl mx-auto pb-20 animate-slide-up">${htmlActiveTab(perms)}</div>
             </main>
           </div>
@@ -181,33 +176,42 @@
     }
 
     function htmlSetup() {
-      return `<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4"><div class="glass-panel p-10 rounded-3xl shadow-2xl w-full max-w-lg text-center animate-in zoom-in-95"><div class="bg-gradient-to-br from-emerald-400 to-emerald-600 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"><i class="fas fa-cloud text-4xl text-white"></i></div><h1 class="text-3xl font-black mb-2 text-slate-800">เชื่อมต่อคลาวด์</h1><p class="text-gray-500 text-sm mb-6 font-medium">วาง URL จาก Google Apps Script (แนะนำใช้ Gmail ส่วนตัว)</p><input type="text" id="setup-url" class="w-full p-4 border border-gray-200 rounded-xl outline-none font-mono text-sm bg-white/50 mb-6 focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="https://script.google.com/.../exec"><button onclick="window.saveUrl(document.getElementById('setup-url').value)" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-lg shadow-[0_4px_14px_0_rgba(5,150,105,0.39)] hover:bg-emerald-700 active:scale-95 transition-all">เริ่มต้นใช้งาน</button></div></div>`;
+      return `<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4"><div class="glass-panel p-10 rounded-3xl shadow-2xl w-full max-w-lg text-center animate-in zoom-in-95"><div class="bg-gradient-to-br from-emerald-400 to-emerald-600 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"><i class="fas fa-cloud text-4xl text-white"></i></div><h1 class="text-3xl font-black mb-2 text-slate-800">เชื่อมต่อคลาวด์</h1><p class="text-slate-500 text-sm mb-6 font-medium">วาง URL จาก Google Apps Script (แนะนำใช้ Gmail ส่วนตัว)</p><input type="text" id="setup-url" class="w-full p-4 border border-slate-200 rounded-xl outline-none font-mono text-sm bg-white/50 mb-6 focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="https://script.google.com/.../exec"><button onclick="window.saveUrl(document.getElementById('setup-url').value)" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-emerald-700 active:scale-95 transition-all">เริ่มต้นใช้งาน</button></div></div>`;
     }
-    function htmlLoading() { return `<div class="h-screen flex flex-col items-center justify-center bg-slate-50"><i class="fas fa-circle-notch fa-spin text-blue-600 text-6xl mb-6"></i><h2 class="text-2xl font-black text-slate-700 tracking-wide">กำลังเชื่อมต่อข้อมูล...</h2></div>`; }
+    function htmlLoading() { return `<div class="h-screen flex flex-col items-center justify-center bg-slate-50"><i class="fas fa-circle-notch fa-spin text-blue-600 text-6xl mb-6"></i><h2 class="text-2xl font-black text-slate-700 tracking-wide">กำลังดึงข้อมูล...</h2></div>`; }
     function htmlLogin() {
-      return `<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4 relative overflow-hidden"><div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div><div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div><div class="glass-panel p-8 md:p-10 rounded-3xl shadow-2xl w-full max-w-md animate-in slide-in-from-bottom-8 duration-500 relative z-10 border border-white/40"><div class="text-center mb-10"><div class="bg-gradient-to-br from-blue-600 to-indigo-700 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-300"><i class="fas fa-cube text-white text-4xl"></i></div><h1 class="text-3xl font-black text-slate-800 tracking-tighter">ASIA HYDRO</h1><p class="text-slate-500 text-sm mt-2 font-medium">Smart Procurement & Inventory</p></div><form onsubmit="window.doLogin(event)" class="space-y-6"><div><div class="relative"><i class="fas fa-user absolute left-4 top-4 text-slate-400"></i><input type="text" id="login-u" class="w-full pl-12 pr-4 py-3.5 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-100/80 shadow-inner font-medium text-slate-700" placeholder="Username" required></div></div><div><div class="relative"><i class="fas fa-lock absolute left-4 top-4 text-slate-400"></i><input type="password" id="login-p" class="w-full pl-12 pr-4 py-3.5 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-100/80 shadow-inner font-medium text-slate-700" placeholder="Password" required></div></div><button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:bg-blue-700 transition-all active:scale-95">เข้าสู่ระบบ</button></form></div></div>`;
+      return `<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4 relative overflow-hidden"><div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div><div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div><div class="glass-panel p-8 md:p-10 rounded-[2rem] shadow-2xl w-full max-w-md animate-in slide-in-from-bottom-8 duration-500 relative z-10 border border-white/60"><div class="text-center mb-10"><div class="bg-gradient-to-br from-blue-600 to-indigo-700 w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-300"><i class="fas fa-layer-group text-white text-4xl"></i></div><h1 class="text-3xl font-black text-slate-800 tracking-tighter">ASIA HYDRO</h1><p class="text-slate-500 text-sm mt-2 font-medium">Smart Procurement & Inventory</p></div><form onsubmit="window.doLogin(event)" class="space-y-6"><div><div class="relative"><i class="fas fa-user absolute left-5 top-[18px] text-slate-400"></i><input type="text" id="login-u" class="w-full pl-12 pr-4 py-4 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 bg-white/50 shadow-inner font-bold text-slate-700" placeholder="Username" required></div></div><div><div class="relative"><i class="fas fa-lock absolute left-5 top-[18px] text-slate-400"></i><input type="password" id="login-p" class="w-full pl-12 pr-4 py-4 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 bg-white/50 shadow-inner font-bold text-slate-700" placeholder="Password" required></div></div><button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:shadow-blue-500/30 hover:bg-blue-700 transition-all hover-lift active:scale-95">เข้าสู่ระบบ</button></form></div></div>`;
     }
 
-    function htmlSyncStatus() { return `<div class="fixed top-6 right-6 z-[150] glass-panel rounded-full px-5 py-2.5 shadow-lg flex items-center transition-all duration-300">${window.isSyncing ? '<i class="fas fa-circle-notch fa-spin text-blue-600 mr-2 text-lg"></i><span class="text-sm font-bold text-slate-700">กำลังซิงค์...</span>' : '<i class="fas fa-cloud text-emerald-500 mr-2 text-lg"></i><span class="text-sm font-bold text-slate-700">ซิงค์แล้ว</span>'}</div>`; }
+    function htmlSyncStatus() {
+      return `
+        <div class="fixed top-4 md:top-6 right-4 md:right-6 z-[150] glass-panel rounded-full px-5 py-2.5 shadow-lg flex items-center transition-all duration-300">
+          ${window.isSyncing ? '<i class="fas fa-circle-notch fa-spin text-blue-600 mr-2.5 text-lg"></i><span class="text-sm font-bold text-slate-700">กำลังซิงค์...</span>' : '<i class="fas fa-cloud text-emerald-500 mr-2.5 text-lg"></i><span class="text-sm font-bold text-slate-700">ซิงค์แล้ว</span>'}
+        </div>
+      `;
+    }
     function htmlHeader() {
-      let tName = state.tab === 'gr' ? 'รับเข้า (GR)' : state.tab === 'issue' ? 'เบิกออก (Issue)' : state.tab;
-      return `<header class="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-6 shrink-0 z-30 sticky top-0"><div class="flex items-center"><button onclick="window.state.sidebar=true; window.updateUI()" class="md:hidden mr-4 bg-slate-100 p-2.5 rounded-xl hover:bg-slate-200 transition-colors"><i class="fas fa-bars text-slate-700"></i></button><h2 class="font-black uppercase text-slate-800 tracking-widest text-xl">${tName}</h2></div><button onclick="window.print()" class="text-sm font-bold bg-slate-800 text-white px-5 py-2.5 rounded-xl shadow-md hover:bg-slate-900 transition-colors hover-lift"><i class="fas fa-print mr-2"></i>พิมพ์หน้าจอ</button></header>`;
+      let tName = state.tab === 'gr' ? 'รับเข้าสต๊อก (GR)' : state.tab === 'issue' ? 'เบิกจ่าย (Issue)' : state.tab === 'pr' ? 'ใบขอซื้อ (PR)' : state.tab === 'po' ? 'ใบสั่งซื้อ (PO)' : state.tab === 'stock' ? 'สินค้าคงคลัง' : state.tab === 'history' ? 'ประวัติความเคลื่อนไหว' : state.tab === 'reports' ? 'ระบบรายงาน' : state.tab === 'settings' ? 'ตั้งค่าระบบ' : 'แดชบอร์ด';
+      return `<header class="bg-white/90 backdrop-blur-lg border-b border-slate-200 h-20 flex items-center justify-between px-4 md:px-8 shrink-0 z-30 sticky top-0"><div class="flex items-center"><button onclick="window.state.sidebar=true; window.updateUI()" class="md:hidden mr-4 bg-slate-100 p-2.5 rounded-xl hover:bg-slate-200 transition-colors"><i class="fas fa-bars text-slate-700"></i></button><h2 class="font-black text-slate-800 text-xl md:text-2xl">${tName}</h2></div><button onclick="window.print()" class="hidden md:flex text-sm font-bold bg-white border border-slate-200 text-slate-600 px-5 py-2.5 rounded-xl shadow-sm hover:bg-slate-50 transition-colors hover-lift items-center"><i class="fas fa-print mr-2 text-blue-500"></i>พิมพ์หน้าจอ</button></header>`;
     }
     function htmlSidebar(p) {
-      const btn = (id, icon, txt, badge='') => `<button onclick="window.changeTab('${id}')" class="w-full flex items-center space-x-3 px-5 py-4 rounded-2xl text-sm font-bold transition-all duration-200 ${state.tab===id?'bg-blue-600 text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)]':'text-slate-400 hover:bg-slate-800 hover:text-white'}"><i class="fas ${icon} w-6 text-center text-lg"></i><span>${txt}</span>${badge}</button>`;
+      const btn = (id, icon, txt, badge='') => `<button onclick="window.changeTab('${id}')" class="w-full flex items-center space-x-3 px-5 py-4 rounded-2xl text-sm font-bold transition-all duration-200 ${state.tab===id?'bg-blue-600 text-white shadow-lg shadow-blue-600/30':'text-slate-400 hover:bg-slate-800 hover:text-white'}"><i class="fas ${icon} w-6 text-center text-lg"></i><span>${txt}</span>${badge}</button>`;
       const head = txt => `<div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-8 mb-3 ml-3">${txt}</div>`;
       const poWait = window.DB.pos.filter(x=>x.status==='Pending Receipt').length;
       const bPo = poWait > 0 ? `<span class="bg-red-500 text-white text-[11px] px-2.5 py-0.5 rounded-full ml-auto shadow-sm">${poWait}</span>` : '';
 
       return `
         ${state.sidebar ? `<div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden animate-in fade-in" onclick="window.state.sidebar=false; window.updateUI()"></div>` : ''}
-        <nav class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 flex flex-col h-full shadow-2xl transition-transform transform duration-300 md:relative md:translate-x-0 ${state.sidebar ? 'translate-x-0' : '-translate-x-full'}"><div class="p-6 flex justify-between items-center border-b border-slate-800/50"><div class="flex items-center space-x-3"><div class="bg-gradient-to-br from-blue-500 to-blue-700 p-3 rounded-2xl shadow-inner"><i class="fas fa-box text-white text-xl"></i></div><h1 class="text-2xl font-black text-white tracking-tight">AH-IMS</h1></div><button onclick="window.state.sidebar=false; window.updateUI()" class="md:hidden text-slate-500 hover:text-white bg-slate-800 p-2 rounded-xl"><i class="fas fa-times text-xl"></i></button></div><div class="flex-1 py-6 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-            ${window.USER.role!=='Requester' ? btn('dashboard','fa-chart-pie','ภาพรวม (Dashboard)') : ''}
+        <nav class="fixed inset-y-0 left-0 z-50 w-[280px] bg-slate-900 flex flex-col h-full shadow-2xl transition-transform transform duration-300 md:relative md:translate-x-0 ${state.sidebar ? 'translate-x-0' : '-translate-x-full'}">
+          <div class="p-6 flex justify-between items-center border-b border-slate-800/50"><div class="flex items-center space-x-3"><div class="bg-gradient-to-br from-blue-500 to-blue-700 p-3 rounded-2xl shadow-inner"><i class="fas fa-layer-group text-white text-xl"></i></div><h1 class="text-2xl font-black text-white tracking-tight">AH-IMS</h1></div><button onclick="window.state.sidebar=false; window.updateUI()" class="md:hidden text-slate-500 hover:text-white bg-slate-800 p-2 rounded-xl"><i class="fas fa-times text-xl"></i></button></div>
+          <div class="flex-1 py-6 px-4 space-y-1 overflow-y-auto custom-scrollbar">
+            ${window.USER.role!=='Requester' ? btn('dashboard','fa-chart-pie','แดชบอร์ด') : ''}
             ${p.pr ? head('ระบบจัดซื้อ') + btn('pr','fa-file-invoice','ใบขอซื้อ (PR)') + (p.po ? btn('po','fa-shopping-cart','ใบสั่งซื้อ (PO)') : '') : ''}
             ${p.inv ? head('คลังสินค้า') + btn('gr','fa-truck-loading','รับเข้า (GR)', bPo) + btn('issue','fa-dolly','เบิกจ่าย (Issue)') + btn('stock','fa-cubes','สต๊อกสินค้า') + btn('history','fa-clipboard-list','ประวัติเคลื่อนไหว') : ''}
             ${p.rep ? head('วิเคราะห์ข้อมูล') + btn('reports','fa-chart-line','รายงาน (Reports)') : ''}
-            ${p.set ? head('ผู้ดูแลระบบ') + btn('settings','fa-cog','ตั้งค่าระบบ') : ''}
-          </div><div class="p-5 border-t border-slate-800/50 mt-auto bg-slate-900/80 flex justify-between items-center"><div class="flex items-center space-x-3"><div class="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center font-black text-xl text-blue-400 border border-slate-700">${window.USER.name.charAt(0)}</div><div class="truncate"><p class="font-bold text-sm text-white">${window.USER.name}</p><p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">${window.USER.role}</p></div></div><button onclick="window.doLogout()" class="text-slate-500 hover:text-red-400 p-3 rounded-xl hover:bg-slate-800 transition-colors"><i class="fas fa-power-off text-xl"></i></button></div>
+            ${p.set ? head('ตั้งค่าระบบ') + btn('settings','fa-cog','จัดการระบบ') : ''}
+          </div>
+          <div class="p-5 border-t border-slate-800/50 mt-auto bg-slate-900/80 flex justify-between items-center"><div class="flex items-center space-x-3"><div class="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center font-black text-xl text-blue-400 border border-slate-700 shadow-inner">${window.USER.name.charAt(0)}</div><div class="truncate"><p class="font-bold text-sm text-white">${window.USER.name}</p><p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">${window.USER.role}</p></div></div><button onclick="window.doLogout()" class="text-slate-500 hover:text-red-400 p-3 rounded-xl hover:bg-slate-800 transition-colors"><i class="fas fa-power-off text-xl"></i></button></div>
         </nav>
       `;
     }
@@ -228,16 +232,57 @@
 
     // --- VIEWS ---
     function viewDashboard(p) {
-      const prods = window.DB.products; const hStk = prods.filter(x=>x.stock>x.minStock).length; const lStk = prods.filter(x=>x.stock>0 && x.stock<=x.minStock).length; const oStk = prods.filter(x=>x.stock===0).length;
+      const prods = window.DB.products; const txns = window.DB.transactions;
+      const hStk = prods.filter(x=>x.stock>x.minStock).length; const lStk = prods.filter(x=>x.stock>0 && x.stock<=x.minStock).length; const oStk = prods.filter(x=>x.stock===0).length;
       const hPct = Math.round((hStk/prods.length)*100)||0; const lPct = Math.round((lStk/prods.length)*100)||0; const oPct = Math.round((oStk/prods.length)*100)||0;
+      
       let acts = '';
-      if(p.pr) acts+=`<button onclick="window.state.tab='pr'; window.state.pr.view='create'; window.updateUI()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 px-5 py-3 rounded-xl font-bold flex items-center transition-all hover-lift"><i class="fas fa-plus mr-2"></i>สร้าง PR</button>`;
-      if(p.inv) acts+=`<button onclick="window.changeTab('gr')" class="bg-emerald-500/90 hover:bg-emerald-500 backdrop-blur-sm px-5 py-3 rounded-xl font-bold flex items-center shadow-lg transition-all hover-lift"><i class="fas fa-truck-loading mr-2"></i>รับเข้า</button><button onclick="window.changeTab('issue')" class="bg-amber-500/90 hover:bg-amber-500 backdrop-blur-sm px-5 py-3 rounded-xl font-bold flex items-center shadow-lg transition-all hover-lift"><i class="fas fa-dolly mr-2"></i>เบิกออก</button>`;
+      if(p.pr) acts+=`<button onclick="window.state.tab='pr'; window.state.pr.view='create'; window.updateUI()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 px-5 py-2.5 rounded-xl font-bold flex items-center transition-all hover-lift"><i class="fas fa-plus mr-2"></i>สร้าง PR</button>`;
+      if(p.inv) acts+=`<button onclick="window.changeTab('gr')" class="bg-emerald-500/90 hover:bg-emerald-400 backdrop-blur-sm px-5 py-2.5 rounded-xl font-bold flex items-center shadow-lg transition-all hover-lift border border-emerald-400/50"><i class="fas fa-truck-loading mr-2"></i>รับเข้า</button><button onclick="window.changeTab('issue')" class="bg-amber-500/90 hover:bg-amber-400 backdrop-blur-sm px-5 py-2.5 rounded-xl font-bold flex items-center shadow-lg transition-all hover-lift border border-amber-400/50"><i class="fas fa-dolly mr-2"></i>เบิกออก</button>`;
+      
       let cards = '';
-      if(p.pr) cards += `<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer hover-lift flex items-center space-x-5" onclick="window.changeTab('pr')"><div class="p-4 bg-blue-50 text-blue-600 rounded-2xl"><i class="fas fa-file-invoice text-3xl"></i></div><div><p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">PR รอพิจารณา</p><p class="text-3xl font-black text-slate-800">${window.DB.prs.filter(x=>x.status==='Pending').length}</p></div></div>`;
-      if(p.po) cards += `<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer hover-lift flex items-center space-x-5" onclick="window.changeTab('po')"><div class="p-4 bg-indigo-50 text-indigo-600 rounded-2xl"><i class="fas fa-shopping-cart text-3xl"></i></div><div><p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">PO รอรับของ</p><p class="text-3xl font-black text-slate-800">${window.DB.pos.filter(x=>x.status==='Pending Receipt').length}</p></div></div>`;
-      if(p.inv) { cards += `<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer hover-lift flex items-center space-x-5" onclick="window.changeTab('stock')"><div class="p-4 bg-emerald-50 text-emerald-600 rounded-2xl"><i class="fas fa-cubes text-3xl"></i></div><div><p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">สินค้าในคลัง</p><p class="text-3xl font-black text-slate-800">${prods.length}</p></div></div>`; cards += `<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer hover-lift flex items-center space-x-5" onclick="window.changeTab('stock')"><div class="p-4 bg-red-50 text-red-500 rounded-2xl"><i class="fas fa-exclamation-triangle text-3xl"></i></div><div><p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">สต๊อกวิกฤต</p><p class="text-3xl font-black text-red-600">${lStk+oStk}</p></div></div>`; }
-      return `<div class="space-y-8"><div class="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[2rem] p-8 md:p-12 text-white shadow-xl relative overflow-hidden"><div class="relative z-10"><h2 class="text-3xl md:text-4xl font-black mb-3 tracking-tight">สวัสดี, ${window.USER.name} 👋</h2><p class="text-blue-100 mb-8 text-lg font-medium">ภาพรวมระบบจัดซื้อและคลังสินค้า พร้อมปฏิบัติงาน</p><div class="flex gap-4 flex-wrap">${acts}</div></div><i class="fas fa-chart-network text-[250px] absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10 hidden md:block mix-blend-overlay"></i></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${cards}</div>${p.inv ? `<div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8"><h3 class="font-black text-slate-800 mb-6 text-xl tracking-tight">สถานะความสมบูรณ์ของคลัง (Stock Health)</h3><div class="w-full h-10 flex rounded-full overflow-hidden mb-6 bg-slate-100 shadow-inner"><div style="width: ${hPct}%" class="bg-emerald-500 flex items-center justify-center text-xs font-black text-white shadow-inner transition-all duration-1000">${hPct>5?hPct+'%':''}</div><div style="width: ${lPct}%" class="bg-amber-400 flex items-center justify-center text-xs font-black text-white shadow-inner transition-all duration-1000">${lPct>5?lPct+'%':''}</div><div style="width: ${oPct}%" class="bg-red-500 flex items-center justify-center text-xs font-black text-white shadow-inner transition-all duration-1000">${oPct>5?oPct+'%':''}</div></div><div class="flex gap-6"><div class="flex items-center"><span class="w-4 h-4 rounded-full bg-emerald-500 mr-2 shadow-sm"></span><span class="text-sm font-bold text-slate-600">ปกติ (${hStk})</span></div><div class="flex items-center"><span class="w-4 h-4 rounded-full bg-amber-400 mr-2 shadow-sm"></span><span class="text-sm font-bold text-slate-600">ใกล้หมด (${lStk})</span></div><div class="flex items-center"><span class="w-4 h-4 rounded-full bg-red-500 mr-2 shadow-sm"></span><span class="text-sm font-bold text-slate-600">หมดสต๊อก (${oStk})</span></div></div></div>`:''}</div>`;
+      if(p.pr) cards += `<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer hover-lift flex items-center space-x-5" onclick="window.changeTab('pr')"><div class="p-4 bg-blue-50 text-blue-600 rounded-2xl"><i class="fas fa-file-invoice text-3xl"></i></div><div><p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">PR รอพิจารณา</p><p class="text-3xl font-black text-slate-800">${window.DB.prs.filter(x=>x.status==='Pending').length}</p></div></div>`;
+      if(p.po) cards += `<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer hover-lift flex items-center space-x-5" onclick="window.changeTab('po')"><div class="p-4 bg-indigo-50 text-indigo-600 rounded-2xl"><i class="fas fa-shopping-cart text-3xl"></i></div><div><p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">PO รอรับของ</p><p class="text-3xl font-black text-slate-800">${window.DB.pos.filter(x=>x.status==='Pending Receipt').length}</p></div></div>`;
+      if(p.inv) {
+        cards += `<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer hover-lift flex items-center space-x-5" onclick="window.changeTab('stock')"><div class="p-4 bg-emerald-50 text-emerald-600 rounded-2xl"><i class="fas fa-cubes text-3xl"></i></div><div><p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">สินค้าในคลัง</p><p class="text-3xl font-black text-slate-800">${prods.length}</p></div></div>`;
+        cards += `<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 cursor-pointer hover-lift flex items-center space-x-5" onclick="window.changeTab('stock')"><div class="p-4 bg-red-50 text-red-500 rounded-2xl"><i class="fas fa-exclamation-triangle text-3xl"></i></div><div><p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">สต๊อกวิกฤต</p><p class="text-3xl font-black text-red-600">${lStk+oStk}</p></div></div>`;
+      }
+
+      let recentTx = txns.slice(0,5).map(t => {
+        const pd = prods.find(x=>x.id===t.productId);
+        const isOut = t.type === 'OUT';
+        return `<div class="flex items-center justify-between p-4 hover:bg-slate-50 rounded-2xl transition-colors border border-transparent hover:border-slate-100"><div class="flex items-center space-x-4"><div class="p-3 rounded-xl ${isOut?'bg-amber-50 text-amber-500':'bg-emerald-50 text-emerald-500'}"><i class="fas ${isOut?'fa-arrow-up':'fa-arrow-down'}"></i></div><div><p class="font-bold text-slate-800 text-sm line-clamp-1">${pd?.name||t.productId}</p><p class="text-xs text-slate-500 font-medium mt-0.5">${t.referenceNo} • ${fDate(t.date)}</p></div></div><div class="font-black text-lg ${isOut?'text-amber-500':'text-emerald-500'}">${isOut?'-':'+'}${t.qty}</div></div>`;
+      }).join('');
+
+      return `
+        <div class="space-y-8">
+          <div class="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[2rem] p-8 md:p-12 text-white shadow-xl relative overflow-hidden">
+            <div class="relative z-10"><h2 class="text-3xl md:text-4xl font-black mb-3 tracking-tight">สวัสดี, ${window.USER.name} 👋</h2><p class="text-blue-100 mb-8 text-lg font-medium">ภาพรวมระบบจัดซื้อและคลังสินค้า พร้อมปฏิบัติงาน</p><div class="flex gap-4 flex-wrap">${acts}</div></div>
+            <i class="fas fa-chart-network text-[250px] absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10 hidden md:block mix-blend-overlay"></i>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${cards}</div>
+          
+          ${p.inv ? `
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col"><h3 class="font-black text-slate-800 mb-8 text-lg tracking-tight flex items-center"><i class="fas fa-heartbeat text-red-400 mr-2"></i> สุขภาพคลังสินค้า</h3>
+              <div class="w-full h-12 flex rounded-full overflow-hidden mb-8 bg-slate-100 shadow-inner">
+                <div style="width: ${hPct}%" class="bg-emerald-500 flex items-center justify-center text-sm font-black text-white shadow-inner transition-all duration-1000">${hPct>5?hPct+'%':''}</div>
+                <div style="width: ${lPct}%" class="bg-amber-400 flex items-center justify-center text-sm font-black text-white shadow-inner transition-all duration-1000">${lPct>5?lPct+'%':''}</div>
+                <div style="width: ${oPct}%" class="bg-red-500 flex items-center justify-center text-sm font-black text-white shadow-inner transition-all duration-1000">${oPct>5?oPct+'%':''}</div>
+              </div>
+              <div class="flex flex-wrap gap-4 mt-auto">
+                <div class="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"><div class="w-3 h-3 rounded-full bg-emerald-500 mx-auto mb-2 shadow-sm"></div><p class="text-xs font-bold text-slate-500 uppercase">ปกติ</p><p class="text-xl font-black text-slate-800">${hStk}</p></div>
+                <div class="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"><div class="w-3 h-3 rounded-full bg-amber-400 mx-auto mb-2 shadow-sm"></div><p class="text-xs font-bold text-slate-500 uppercase">ใกล้หมด</p><p class="text-xl font-black text-slate-800">${lStk}</p></div>
+                <div class="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"><div class="w-3 h-3 rounded-full bg-red-500 mx-auto mb-2 shadow-sm"></div><p class="text-xs font-bold text-slate-500 uppercase">หมดสต๊อก</p><p class="text-xl font-black text-slate-800">${oStk}</p></div>
+              </div>
+            </div>
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col"><div class="flex justify-between items-center mb-6"><h3 class="font-black text-slate-800 text-lg tracking-tight flex items-center"><i class="fas fa-bolt text-amber-400 mr-2"></i> ความเคลื่อนไหวล่าสุด</h3><button onclick="window.changeTab('history')" class="text-sm font-bold text-blue-600 hover:underline">ดูทั้งหมด</button></div>
+              <div class="flex-1 space-y-2">${recentTx || '<div class="text-center py-10 text-slate-400 font-bold"><i class="fas fa-box-open text-4xl mb-3 text-slate-200 block"></i>ไม่มีรายการ</div>'}</div>
+            </div>
+          </div>
+          `:''}
+        </div>
+      `;
     }
 
     // --- PR VIEW ---
@@ -246,11 +291,11 @@
       if((!s.isCustom && !s.productId) || (s.isCustom && !s.customName) || !s.qty) return window.showAlert('ผิดพลาด','ระบุสินค้าและจำนวนให้ครบ','error');
       const p = window.DB.products.find(x=>x.id===s.productId);
       s.cart.push({ isCustom: s.isCustom, productId: s.productId, customName: s.customName, qty: Number(s.qty), unit: s.isCustom?s.unit:(p?.unit||'ชิ้น'), reqDate: s.reqDate, jobNo: s.jobNo, suggestVendor: s.suggestVendor, remark: s.remark });
-      s.productId=''; s.customName=''; s.qty=''; s.remark=''; updateUI();
+      s.productId=''; s.customName=''; s.qty=''; s.remark=''; window.updateUI();
     };
-    window.delPrCart = (i) => { window.state.pr.cart.splice(i,1); updateUI(); };
+    window.delPrCart = (i) => { window.state.pr.cart.splice(i,1); window.updateUI(); };
     window.savePr = () => {
-      if(state.pr.cart.length===0) return window.showAlert('ผิดพลาด','ตะกร้าว่าง','error');
+      if(state.pr.cart.length===0) return window.showAlert('ผิดพลาด','ตะกร้าว่างเปล่า ไม่มีสินค้า','error');
       window.showConfirm('บันทึก PR','ยืนยันการสร้างใบขอซื้อ?', () => {
         window.DB.prs.unshift({ id: `PR-${Date.now().toString().slice(-6)}`, date: new Date().toISOString().split('T')[0], requester: window.USER.name, status: 'Pending', items: state.pr.cart });
         state.pr.cart=[]; state.pr.view='list'; window.saveDB(); window.showToast('สร้าง PR สำเร็จ');
@@ -268,10 +313,37 @@
         const pOpts = window.DB.products.map(x=>`<option value="${x.id}">[${x.id}] ${x.name}</option>`).join('');
         let cartHtml = '';
         if(s.cart.length > 0) {
-          cartHtml = `<div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm bg-white mt-8"><table class="w-full text-left whitespace-nowrap min-w-[800px]"><thead class="bg-slate-50 text-xs text-slate-500 border-b uppercase tracking-wider"><tr><th class="px-6 py-5 font-bold">สินค้า</th><th class="px-6 py-5 font-bold text-right">จำนวน</th><th class="px-6 py-5 font-bold">วันที่ต้องการ</th><th class="px-6 py-5 font-bold">JOB#</th><th class="px-6 py-5 font-bold">หมายเหตุ</th><th class="px-6 py-5 font-bold text-center">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">${s.cart.map((it, i) => `<tr><td class="px-6 py-4"><div class="font-bold text-slate-800">${it.isCustom ? it.customName : window.DB.products.find(x=>x.id===it.productId)?.name} ${it.isCustom ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded ml-2 font-black uppercase">นอกระบบ</span>':''}</div><div class="text-xs text-blue-600 font-mono mt-1">${it.productId}</div></td><td class="px-6 py-4 text-right font-black text-xl text-slate-800">${it.qty} <span class="text-sm text-slate-500 font-bold">${it.unit}</span></td><td class="px-6 py-4 text-sm font-medium text-slate-600">${it.reqDate||'-'}</td><td class="px-6 py-4 text-indigo-600 font-black">${it.jobNo||'-'}</td><td class="px-6 py-4 text-slate-500 text-xs truncate max-w-[150px] font-medium">${it.suggestVendor} ${it.remark}</td><td class="px-6 py-4 text-center"><button onclick="window.delPrCart(${i})" class="text-red-500 bg-red-50 p-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-colors hover-lift"><i class="fas fa-times"></i></button></td></tr>`).join('')}</tbody></table></div><div class="flex justify-end pt-8 mt-6"><button onclick="window.savePr()" class="bg-emerald-500 text-white px-8 py-4 rounded-xl font-black text-lg shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:bg-emerald-600 hover-lift"><i class="fas fa-check mr-2"></i> ยืนยันบันทึกใบขอซื้อ</button></div>`;
+          cartHtml = `<div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm bg-white mt-8">
+            <table class="w-full text-left whitespace-nowrap min-w-[800px]"><thead class="bg-slate-50 text-xs text-slate-500 border-b uppercase tracking-wider"><tr><th class="px-6 py-5 font-bold">สินค้า</th><th class="px-6 py-5 font-bold text-right">จำนวน</th><th class="px-6 py-5 font-bold">วันที่ต้องการ</th><th class="px-6 py-5 font-bold">JOB#</th><th class="px-6 py-5 font-bold">หมายเหตุ</th><th class="px-6 py-5 font-bold text-center">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">
+            ${s.cart.map((it, i) => `<tr><td class="px-6 py-4"><div class="font-bold text-slate-800">${it.isCustom ? it.customName : window.DB.products.find(x=>x.id===it.productId)?.name} ${it.isCustom ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded ml-2 font-black uppercase">นอกระบบ</span>':''}</div><div class="text-xs text-blue-600 font-mono mt-1">${it.productId}</div></td><td class="px-6 py-4 text-right font-black text-xl text-slate-800">${it.qty} <span class="text-sm text-slate-500 font-bold">${it.unit}</span></td><td class="px-6 py-4 text-sm font-medium text-slate-600">${it.reqDate||'-'}</td><td class="px-6 py-4 text-indigo-600 font-black">${it.jobNo||'-'}</td><td class="px-6 py-4 text-slate-500 text-xs truncate max-w-[150px] font-medium">${it.suggestVendor} ${it.remark}</td><td class="px-6 py-4 text-center"><button onclick="window.delPrCart(${i})" class="text-red-500 bg-red-50 p-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-colors hover-lift"><i class="fas fa-times"></i></button></td></tr>`).join('')}
+            </tbody></table></div>
+            <div class="flex justify-end pt-8 mt-6"><button onclick="window.savePr()" class="bg-emerald-500 text-white px-10 py-4 rounded-2xl font-black text-xl shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:bg-emerald-600 hover-lift"><i class="fas fa-check mr-2"></i> ยืนยันบันทึกใบขอซื้อ</button></div>`;
         }
+
         return `
-          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-10 max-w-5xl mx-auto"><div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-5"><h2 class="text-2xl md:text-3xl font-black tracking-tight text-slate-800">สร้างใบขอซื้อ (PR)</h2><button onclick="window.state.pr.view='list'; window.updateUI()" class="bg-slate-100 px-5 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors">กลับหน้ารายการ</button></div><div class="space-y-8"><div><label class="block font-bold mb-2 text-slate-700">ผู้ขอซื้อ *</label><input type="text" value="${window.USER.name}" class="w-full border-2 border-slate-100 rounded-xl p-4 bg-slate-50 font-bold text-slate-500" disabled></div><div class="border-2 border-blue-100 rounded-2xl p-6 md:p-8 bg-blue-50/50"><div class="flex justify-between items-center mb-6"><h3 class="font-black text-blue-800 text-xl tracking-tight">เพิ่มรายการสินค้า</h3><label class="font-bold text-sm text-blue-700 cursor-pointer bg-white px-4 py-2 rounded-full shadow-sm border border-blue-200"><input type="checkbox" id="pr-iscustom" class="mr-2 w-4 h-4 accent-blue-600" ${s.isCustom?'checked':''} onchange="window.state.pr.isCustom=this.checked; window.updateUI()">พิมพ์ชื่อเอง (นอกระบบ)</label></div><div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-5"><div class="md:col-span-3"><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">สินค้า *</label>${!s.isCustom ? `<select id="pr-p-id" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-slate-700 bg-white" onchange="window.state.pr.productId=this.value"><option value="">-- เลือกจากระบบ --</option>${pOpts}</select>` : `<input type="text" id="pr-p-name" placeholder="พิมพ์ชื่อสินค้า..." value="${s.customName}" oninput="window.state.pr.customName=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-slate-700 bg-white">`}</div><div class="flex gap-3"><div class="flex-1"><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">จำนวน *</label><input type="number" id="pr-qty" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-black text-blue-600 text-center bg-white" value="${s.qty}" oninput="window.state.pr.qty=this.value"></div>${s.isCustom ? `<div class="w-24"><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">หน่วย</label><input type="text" id="pr-unit" placeholder="หน่วย" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-slate-700 text-center bg-white" value="${s.unit}" oninput="window.state.pr.unit=this.value"></div>` : ''}</div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6"><div><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">วันที่ต้องการ</label><input type="date" value="${s.reqDate}" oninput="window.state.pr.reqDate=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 bg-white font-medium text-slate-600"></div><div><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">JOB# (รหัสงาน)</label><input type="text" placeholder="AH#..." value="${s.jobNo}" oninput="window.state.pr.jobNo=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 bg-white font-bold"></div><div><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">Suggest Vendor</label><input type="text" placeholder="แนะนำร้านค้า" value="${s.suggestVendor}" oninput="window.state.pr.suggestVendor=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 bg-white font-medium"></div><div><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">หมายเหตุ</label><input type="text" placeholder="สเปคเพิ่มเติม" value="${s.remark}" oninput="window.state.pr.remark=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 bg-white font-medium"></div></div><div class="text-right pt-5 border-t border-blue-200/50"><button onclick="window.addPrCart()" class="bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:bg-blue-700 hover-lift"><i class="fas fa-plus mr-2"></i> เพิ่มลงตะกร้า</button></div></div>${cartHtml}</div></div>
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-10 max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-5"><h2 class="text-2xl md:text-3xl font-black tracking-tight text-slate-800">สร้างใบขอซื้อ (PR)</h2><button onclick="window.state.pr.view='list'; window.updateUI()" class="bg-slate-100 px-5 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors">กลับหน้ารายการ</button></div>
+            <div class="space-y-8">
+              <div><label class="block font-bold mb-2 text-slate-700">ผู้ขอซื้อ *</label><input type="text" value="${window.USER.name}" class="w-full border-2 border-slate-100 rounded-xl p-4 bg-slate-50 font-bold text-slate-500" disabled></div>
+              <div class="border-2 border-blue-100 rounded-3xl p-6 md:p-8 bg-blue-50/50">
+                <div class="flex justify-between items-center mb-6"><h3 class="font-black text-blue-800 text-xl tracking-tight">เพิ่มรายการสินค้า</h3><label class="font-bold text-sm text-blue-700 cursor-pointer bg-white px-5 py-2.5 rounded-xl shadow-sm border border-blue-200"><input type="checkbox" id="pr-iscustom" class="mr-2 w-4 h-4 accent-blue-600" ${s.isCustom?'checked':''} onchange="window.state.pr.isCustom=this.checked; window.updateUI()">พิมพ์ชื่อเอง (นอกระบบ)</label></div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-5">
+                  <div class="md:col-span-3"><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">สินค้า *</label>
+                    ${!s.isCustom ? `<select id="pr-p-id" class="w-full border-2 border-slate-200 rounded-xl p-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-slate-700 bg-white shadow-sm" onchange="window.state.pr.productId=this.value"><option value="">-- เลือกจากระบบ --</option>${pOpts}</select>` : `<input type="text" id="pr-p-name" placeholder="พิมพ์ชื่อสินค้า..." value="${s.customName}" oninput="window.state.pr.customName=this.value" class="w-full border-2 border-slate-200 rounded-xl p-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-slate-700 bg-white shadow-sm">`}
+                  </div>
+                  <div class="flex gap-3"><div class="flex-1"><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">จำนวน *</label><input type="number" id="pr-qty" class="w-full border-2 border-slate-200 rounded-xl p-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-black text-blue-600 text-center bg-white shadow-sm" value="${s.qty}" oninput="window.state.pr.qty=this.value"></div>${s.isCustom ? `<div class="w-24"><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">หน่วย</label><input type="text" id="pr-unit" placeholder="หน่วย" class="w-full border-2 border-slate-200 rounded-xl p-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-slate-700 text-center bg-white shadow-sm" value="${s.unit}" oninput="window.state.pr.unit=this.value"></div>` : ''}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
+                  <div><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">วันที่ต้องการ</label><input type="date" value="${s.reqDate}" oninput="window.state.pr.reqDate=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 bg-white font-medium text-slate-600 shadow-sm"></div>
+                  <div><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">JOB# (รหัสงาน)</label><input type="text" placeholder="AH#..." value="${s.jobNo}" oninput="window.state.pr.jobNo=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 bg-white font-bold shadow-sm"></div>
+                  <div><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">Suggest Vendor</label><input type="text" placeholder="แนะนำร้านค้า" value="${s.suggestVendor}" oninput="window.state.pr.suggestVendor=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 bg-white font-medium shadow-sm"></div>
+                  <div><label class="block text-xs font-bold mb-2 text-slate-500 uppercase tracking-wider">หมายเหตุ</label><input type="text" placeholder="สเปคเพิ่มเติม" value="${s.remark}" oninput="window.state.pr.remark=this.value" class="w-full border-2 border-slate-200 rounded-xl p-3.5 outline-none focus:border-blue-500 bg-white font-medium shadow-sm"></div>
+                </div>
+                <div class="text-right pt-5 border-t border-blue-200/50"><button onclick="window.addPrCart()" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:bg-blue-700 hover-lift"><i class="fas fa-plus mr-2"></i> เพิ่มลงตะกร้า</button></div>
+              </div>
+              ${cartHtml}
+            </div>
+          </div>
         `;
       }
 
@@ -280,15 +352,18 @@
       const trs = list.map(pr => {
         let acts = '';
         if(p.appr && pr.status==='Pending') acts = `<button onclick="window.actPr('${pr.id}','app')" class="text-emerald-600 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl text-xs font-bold mr-2 hover:bg-emerald-500 hover:text-white transition-colors">อนุมัติ</button><button onclick="window.actPr('${pr.id}','rej')" class="text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-500 hover:text-white transition-colors">ปฏิเสธ</button>`;
-        if(p.po && pr.status==='Approved') acts = `<button onclick="window.state.po.view='create'; window.state.po.prId='${pr.id}'; window.state.tab='po'; window.updateUI();" class="text-blue-600 bg-blue-50 border border-blue-200 px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"><i class="fas fa-file-export mr-1"></i> เปิด PO</button>`;
-        if(pr.status==='Pending' || pr.status==='Rejected') acts += `<button onclick="window.actPr('${pr.id}','del')" class="text-slate-400 hover:text-red-500 ml-3 p-2 text-lg"><i class="fas fa-trash"></i></button>`;
+        if(p.po && pr.status==='Approved' && !window.DB.pos.find(po=>po.prId===pr.id)) acts = `<button onclick="window.state.po.view='create'; window.state.po.prId='${pr.id}'; window.state.tab='po'; window.updateUI();" class="text-blue-600 bg-blue-50 border border-blue-200 px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"><i class="fas fa-file-export mr-1"></i> เปิด PO</button>`;
+        if(pr.status==='Pending' || pr.status==='Rejected') acts += `<button onclick="window.actPr('${pr.id}','del')" class="text-slate-400 hover:text-red-500 ml-3 p-2 text-lg hover-lift"><i class="fas fa-trash"></i></button>`;
         const badge = pr.status==='Approved'?'bg-emerald-100 text-emerald-700':pr.status==='Rejected'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700';
         const txt = pr.status==='Approved'?'อนุมัติแล้ว':pr.status==='Rejected'?'ไม่อนุมัติ':'รอพิจารณา';
-        return `<tr class="hover:bg-slate-50 transition-colors"><td class="p-5 font-black text-blue-600 text-base">${pr.id}</td><td class="p-5 text-sm font-medium text-slate-500">${pr.date}</td><td class="p-5 font-bold text-slate-700">${pr.requester}</td><td class="p-5 text-sm font-black text-slate-600">${pr.items.length} รายการ</td><td class="p-5 text-center"><span class="px-4 py-1.5 rounded-full text-xs font-black tracking-wider uppercase inline-block w-28 ${badge}">${txt}</span></td><td class="p-5 text-center print-hidden">${acts}</td></tr>`;
+        return `<tr class="hover:bg-slate-50 transition-colors"><td class="p-5 font-black text-blue-600 text-base">${pr.id}</td><td class="p-5 text-sm font-medium text-slate-500">${pr.date}</td><td class="p-5 font-bold text-slate-700">${pr.requester}</td><td class="p-5 text-sm font-black text-slate-600">${pr.items.length} รายการ</td><td class="p-5 text-center"><span class="px-4 py-1.5 rounded-full text-[11px] font-black tracking-wider uppercase inline-block w-28 ${badge}">${txt}</span></td><td class="p-5 text-center print-hidden">${acts}</td></tr>`;
       }).join('');
 
       return `
-        <div class="space-y-6"><div class="flex flex-col md:flex-row justify-between md:items-center gap-4"><h2 class="text-3xl font-black tracking-tight text-slate-800">ใบขอซื้อ (PR)</h2><div class="flex gap-3"><div class="relative"><input type="text" id="pr-search" placeholder="ค้นหา PR..." value="${s.search}" oninput="window.state.pr.search=this.value; window.updateUI()" class="pl-12 pr-4 py-3 border-none bg-white shadow-sm rounded-xl outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-72 font-medium"><i class="fas fa-search absolute left-5 top-4 text-slate-400"></i></div>${p.pr ? `<button onclick="window.state.pr.view='create'; window.updateUI()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover-lift whitespace-nowrap"><i class="fas fa-plus mr-2"></i> สร้าง PR</button>` : ''}</div></div><div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-x-auto"><table class="w-full text-left min-w-[900px]"><thead class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400"><tr><th class="p-5 font-black">เลขที่ PR</th><th class="p-5 font-black">วันที่</th><th class="p-5 font-black">ผู้ขอซื้อ</th><th class="p-5 font-black">รายการ</th><th class="p-5 font-black text-center">สถานะ</th><th class="p-5 font-black text-center print-hidden">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">${trs||`<tr><td colspan="6" class="p-16 text-center"><i class="fas fa-file-invoice text-4xl text-slate-200 mb-4 block"></i><span class="font-bold text-slate-400">ไม่พบเอกสาร PR</span></td></tr>`}</tbody></table></div></div>
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row justify-between md:items-center gap-4"><h2 class="text-3xl font-black tracking-tight text-slate-800">ใบขอซื้อ (PR)</h2><div class="flex gap-3"><div class="relative"><input type="text" id="pr-search" placeholder="ค้นหา PR..." value="${s.search}" oninput="window.state.pr.search=this.value; window.updateUI()" class="pl-12 pr-4 py-3.5 border-none bg-white shadow-sm rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-72 font-medium"><i class="fas fa-search absolute left-5 top-4 text-slate-400"></i></div>${p.pr ? `<button onclick="window.state.pr.view='create'; window.updateUI()" class="bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-bold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover-lift whitespace-nowrap"><i class="fas fa-plus mr-2"></i> สร้าง PR</button>` : ''}</div></div>
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-x-auto"><table class="w-full text-left min-w-[900px]"><thead class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400"><tr><th class="p-5 font-black">เลขที่ PR</th><th class="p-5 font-black">วันที่</th><th class="p-5 font-black">ผู้ขอซื้อ</th><th class="p-5 font-black">รายการ</th><th class="p-5 font-black text-center">สถานะ</th><th class="p-5 font-black text-center print-hidden">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">${trs||`<tr><td colspan="6" class="p-16 text-center"><i class="fas fa-file-invoice text-4xl text-slate-200 mb-4 block"></i><span class="font-bold text-slate-400">ไม่พบเอกสาร PR</span></td></tr>`}</tbody></table></div>
+        </div>
       `;
     }
 
@@ -319,7 +394,7 @@
         if(s.prId) {
           const pr = window.DB.prs.find(x=>x.id===s.prId);
           if(pr) {
-            preHtml = `<div class="border-2 border-slate-100 rounded-2xl overflow-hidden mt-8"><div class="bg-slate-50 px-6 py-4 border-b font-black text-slate-600 tracking-wider text-sm"><i class="fas fa-eye mr-2"></i>พรีวิวรายการสั่งซื้อ</div><table class="w-full text-left text-sm"><thead class="bg-white border-b uppercase text-slate-400 text-xs tracking-widest"><tr><th class="p-5 font-black">รหัส</th><th class="p-5 font-black">สินค้า</th><th class="p-5 font-black text-right">จำนวน</th><th class="p-5 font-black text-right">ราคา/หน่วย</th></tr></thead><tbody class="divide-y divide-slate-100 bg-white">
+            preHtml = `<div class="border-2 border-slate-100 rounded-3xl overflow-hidden mt-8"><div class="bg-slate-50 px-6 py-5 border-b font-black text-slate-600 tracking-wider text-sm"><i class="fas fa-eye mr-2"></i>พรีวิวรายการสั่งซื้อ</div><table class="w-full text-left text-sm"><thead class="bg-white border-b uppercase text-slate-400 text-xs tracking-widest"><tr><th class="p-5 font-black">รหัส</th><th class="p-5 font-black">สินค้า</th><th class="p-5 font-black text-right">จำนวน</th><th class="p-5 font-black text-right">ราคา/หน่วย</th></tr></thead><tbody class="divide-y divide-slate-100 bg-white">
               ${pr.items.map(it => {
                 const p = !it.isCustom ? window.DB.products.find(x=>x.id===it.productId) : null;
                 const name = it.isCustom ? it.customName : p?.name;
@@ -331,7 +406,17 @@
         }
 
         return `
-          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in"><div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-5"><h2 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">สร้างใบสั่งซื้อ (PO)</h2><button onclick="window.state.po.view='list'; window.updateUI()" class="bg-slate-100 font-bold px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-200 transition-colors">กลับ</button></div><div class="space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-indigo-50/50 p-8 rounded-2xl border-2 border-indigo-50"><div><label class="block font-black text-indigo-900 mb-2 uppercase tracking-wide text-xs">อ้างอิง PR *</label><select id="po-pr-sel" onchange="window.state.po.prId=this.value; window.updateUI()" class="w-full border-2 border-white shadow-sm rounded-xl p-4 outline-none focus:ring-4 focus:ring-indigo-100 bg-white font-bold text-slate-700"><option value="">-- เลือก PR --</option>${prOpts}</select></div><div><label class="block font-black text-indigo-900 mb-2 uppercase tracking-wide text-xs">ร้านค้า/ผู้จำหน่าย *</label><select id="po-v-sel" onchange="window.state.po.vendorId=this.value; window.updateUI()" class="w-full border-2 border-white shadow-sm rounded-xl p-4 outline-none focus:ring-4 focus:ring-indigo-100 bg-white font-bold text-slate-700"><option value="">-- เลือกร้านค้า --</option>${vOpts}</select></div></div>${preHtml}<div class="text-right mt-8 pt-6 border-t border-slate-100"><button onclick="window.savePo()" class="bg-indigo-600 text-white px-10 py-4 rounded-xl font-black text-lg shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:bg-indigo-700 hover-lift"><i class="fas fa-check mr-2"></i> ยืนยันออก PO</button></div></div></div>
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in">
+            <div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-5"><h2 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">สร้างใบสั่งซื้อ (PO)</h2><button onclick="window.state.po.view='list'; window.updateUI()" class="bg-slate-100 font-bold px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-200 transition-colors">กลับ</button></div>
+            <div class="space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-indigo-50/50 p-8 rounded-3xl border-2 border-indigo-50">
+                <div><label class="block font-black text-indigo-900 mb-2 uppercase tracking-wide text-xs">อ้างอิง PR *</label><select id="po-pr-sel" onchange="window.state.po.prId=this.value; window.updateUI()" class="w-full border-2 border-white shadow-sm rounded-xl p-4 outline-none focus:ring-4 focus:ring-indigo-100 bg-white font-bold text-slate-700"><option value="">-- เลือก PR --</option>${prOpts}</select></div>
+                <div><label class="block font-black text-indigo-900 mb-2 uppercase tracking-wide text-xs">ร้านค้า/ผู้จำหน่าย *</label><select id="po-v-sel" onchange="window.state.po.vendorId=this.value; window.updateUI()" class="w-full border-2 border-white shadow-sm rounded-xl p-4 outline-none focus:ring-4 focus:ring-indigo-100 bg-white font-bold text-slate-700"><option value="">-- เลือกร้านค้า --</option>${vOpts}</select></div>
+              </div>
+              ${preHtml}
+              <div class="text-right mt-8 pt-6 border-t border-slate-100"><button onclick="window.savePo()" class="bg-indigo-600 text-white px-10 py-4 rounded-xl font-black text-lg shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:bg-indigo-700 hover-lift"><i class="fas fa-check mr-2"></i> ยืนยันออก PO</button></div>
+            </div>
+          </div>
         `;
       }
 
@@ -344,11 +429,14 @@
       const trs = list.map(po => {
         const v = window.DB.vendors.find(y=>y.id===po.vendorId);
         const b = po.status==='Completed'?'bg-emerald-100 text-emerald-700':'bg-blue-100 text-blue-700';
-        return `<tr class="hover:bg-slate-50 transition-colors"><td class="p-5 font-black text-indigo-600 text-base">${po.id}</td><td class="p-5 text-sm font-bold text-slate-500">${po.prId}</td><td class="p-5 font-bold text-slate-800">${v?.name||''}</td><td class="p-5 text-center text-sm font-medium text-slate-500">${po.date}</td><td class="p-5 text-center"><span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider inline-block w-28 ${b}">${po.status==='Completed'?'รับครบแล้ว':'รอรับของ'}</span></td><td class="p-5 text-center print-hidden">${po.status==='Pending Receipt'?`<button onclick="window.delPo('${po.id}')" class="text-red-500 bg-white border border-red-200 hover:bg-red-50 px-4 py-1.5 rounded-lg text-xs font-bold hover-lift shadow-sm">ยกเลิก PO</button>`:''}</td></tr>`;
+        return `<tr class="hover:bg-slate-50 transition-colors"><td class="p-5 font-black text-indigo-600 text-base">${po.id}</td><td class="p-5 text-sm font-bold text-slate-500">${po.prId}</td><td class="p-5 font-bold text-slate-800">${v?.name||''}</td><td class="p-5 text-center text-sm font-medium text-slate-500">${po.date}</td><td class="p-5 text-center"><span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider inline-block w-28 ${b}">${po.status==='Completed'?'รับครบแล้ว':'รอรับของ'}</span></td><td class="p-5 text-center print-hidden">${po.status==='Pending Receipt'?`<button onclick="window.delPo('${po.id}')" class="text-red-500 bg-white border border-red-200 hover:bg-red-50 px-4 py-1.5 rounded-lg text-xs font-bold hover-lift shadow-sm">ยกเลิก PO</button>`:''}</td></tr>`;
       }).join('');
 
       return `
-        <div class="space-y-6"><div class="flex flex-col md:flex-row justify-between md:items-center gap-4"><h2 class="text-3xl font-black tracking-tight text-slate-800">ใบสั่งซื้อ (PO)</h2><div class="flex gap-3"><div class="relative"><input type="text" placeholder="ค้นหา PO..." value="${s.search}" oninput="window.state.po.search=this.value; window.updateUI()" class="pl-12 pr-4 py-3 border-none shadow-sm bg-white rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-72 font-medium"><i class="fas fa-search absolute left-5 top-4 text-slate-400"></i></div><button onclick="window.state.po.view='create'; window.updateUI()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover-lift whitespace-nowrap"><i class="fas fa-plus mr-2"></i> สร้าง PO</button></div></div><div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-x-auto"><table class="w-full text-left min-w-[900px]"><thead class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400"><tr><th class="p-5 font-black">เลขที่ PO</th><th class="p-5 font-black">อ้างอิง PR</th><th class="p-5 font-black">ซัพพลายเออร์</th><th class="p-5 font-black text-center">วันที่สั่ง</th><th class="p-5 font-black text-center">สถานะ</th><th class="p-5 font-black text-center print-hidden">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">${trs||`<tr><td colspan="6" class="p-16 text-center"><i class="fas fa-shopping-cart text-4xl text-slate-200 mb-4 block"></i><span class="font-bold text-slate-400">ไม่พบเอกสาร PO</span></td></tr>`}</tbody></table></div></div>
+        <div class="space-y-6">
+          <div class="flex flex-col md:flex-row justify-between md:items-center gap-4"><h2 class="text-3xl font-black tracking-tight text-slate-800">ใบสั่งซื้อ (PO)</h2><div class="flex gap-3"><div class="relative"><input type="text" placeholder="ค้นหา PO..." value="${s.search}" oninput="window.state.po.search=this.value; window.updateUI()" class="pl-12 pr-4 py-3.5 border-none shadow-sm bg-white rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-72 font-medium"><i class="fas fa-search absolute left-5 top-4 text-slate-400"></i></div><button onclick="window.state.po.view='create'; window.updateUI()" class="bg-indigo-600 text-white px-6 py-3.5 rounded-2xl font-bold shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover-lift whitespace-nowrap"><i class="fas fa-plus mr-2"></i> สร้าง PO</button></div></div>
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-x-auto"><table class="w-full text-left min-w-[900px]"><thead class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400"><tr><th class="p-5 font-black">เลขที่ PO</th><th class="p-5 font-black">อ้างอิง PR</th><th class="p-5 font-black">ซัพพลายเออร์</th><th class="p-5 font-black text-center">วันที่สั่ง</th><th class="p-5 font-black text-center">สถานะ</th><th class="p-5 font-black text-center print-hidden">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">${trs||`<tr><td colspan="6" class="p-16 text-center"><i class="fas fa-shopping-cart text-4xl text-slate-200 mb-4 block"></i><span class="font-bold text-slate-400">ไม่พบเอกสาร PO</span></td></tr>`}</tbody></table></div>
+        </div>
       `;
     }
 
@@ -421,7 +509,7 @@
         const activePOs = window.DB.pos.filter(p=>p.status==='Pending Receipt');
         const opts = activePOs.map(po => `<option value="${po.id}">${po.id} - ${window.DB.vendors.find(v=>v.id===po.vendorId)?.name||''}</option>`).join('');
         return `
-          <h2 class="text-3xl font-black tracking-tight mb-8">รับสินค้าเข้า (Goods Receipt)</h2>
+          <h2 class="text-3xl font-black tracking-tight mb-8">รับสินค้าเข้าสต๊อก (Goods Receipt)</h2>
           <div class="bg-white p-12 rounded-[2rem] shadow-sm border border-slate-100 text-center max-w-2xl mx-auto mt-10 animate-slide-up relative overflow-hidden">
             <div class="bg-emerald-50 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-100"><i class="fas fa-truck-loading text-5xl text-emerald-500"></i></div>
             <h3 class="text-2xl font-black text-slate-800 mb-2">สแกนรับสินค้าเข้าคลัง</h3>
@@ -453,10 +541,10 @@
       }).join('');
 
       return `
-        <h2 class="text-3xl font-black tracking-tight mb-8">รับสินค้าเข้า (Goods Receipt)</h2>
+        <h2 class="text-3xl font-black tracking-tight mb-8">รับสินค้าเข้าสต๊อก (Goods Receipt)</h2>
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in slide-in-from-bottom-4">
           <div class="xl:col-span-2 space-y-6">
-            <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm print-hidden"><label class="block font-black text-slate-800 mb-4 tracking-wide"><i class="fas fa-barcode mr-2 text-blue-500"></i> เครื่องสแกนบาร์โค้ด</label><div class="relative"><input type="text" id="gr-scan" onkeydown="window.grHandleScan(event)" placeholder="ยิงบาร์โค้ดแล้วกด Enter..." class="w-full pl-14 p-5 text-xl font-mono border-2 border-blue-100 bg-blue-50/30 rounded-2xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 shadow-inner transition-all" autofocus><i class="fas fa-qrcode absolute left-5 top-[22px] text-2xl text-blue-300"></i></div></div>
+            <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm print-hidden"><label class="block font-black text-slate-800 mb-4 tracking-wide"><i class="fas fa-barcode mr-2 text-blue-500"></i> สแกนบาร์โค้ด / QR Code</label><div class="relative"><input type="text" id="gr-scan" onkeydown="window.grHandleScan(event)" placeholder="ยิงสแกนแล้วกด Enter..." class="w-full pl-14 p-5 text-xl font-mono border-2 border-blue-100 bg-blue-50/30 rounded-2xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 shadow-inner transition-all" autofocus><i class="fas fa-qrcode absolute left-5 top-[22px] text-2xl text-blue-300"></i></div></div>
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden"><div class="bg-slate-50/50 p-6 border-b border-slate-100 flex justify-between items-center"><h3 class="font-black text-lg tracking-tight flex items-center text-slate-800"><i class="fas fa-box-open text-emerald-500 mr-3 text-2xl"></i>รายการใน PO: <span class="text-blue-600 ml-2">${po.id}</span></h3><button onclick="window.state.gr.poId=''; window.updateUI()" class="text-sm bg-white border border-slate-200 px-4 py-2 rounded-xl font-bold text-slate-600 shadow-sm hover:bg-slate-50 hover-lift"><i class="fas fa-sync-alt mr-1.5"></i> เปลี่ยน PO</button></div>
             <div class="overflow-x-auto"><table class="w-full text-left min-w-[700px]"><thead class="bg-white border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400"><tr><th class="p-5 font-black">สินค้า</th><th class="p-5 font-black text-center">สั่ง (PO)</th><th class="p-5 font-black text-center">รับแล้ว</th><th class="p-5 font-black text-center w-36 text-emerald-500">สแกนเพิ่ม</th><th class="p-5 font-black text-center">จัดการ</th></tr></thead><tbody>${trs}</tbody></table></div></div>
           </div>
@@ -528,7 +616,7 @@
               <input type="text" id="iss-r" value="${s.ref}" oninput="window.state.iss.ref=this.value" placeholder="เช่น แผนกผลิต..." class="w-full border-2 border-amber-200 rounded-2xl p-4 bg-amber-50/30 font-black text-slate-800 text-lg outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 shadow-inner">
               
               <div class="mt-8 pt-8 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-amber-50/60 p-6 rounded-2xl border border-amber-200 shadow-inner"><label class="block font-black text-amber-900 mb-3 tracking-wide text-sm"><i class="fas fa-barcode mr-2 text-amber-600"></i>สแกนบาร์โค้ด</label><input type="text" id="iss-s" onkeydown="window.issScan(event)" placeholder="ยิงสแกน..." class="w-full border-2 border-amber-300 rounded-xl p-3.5 font-mono outline-none focus:border-amber-600 focus:ring-4 focus:ring-amber-100 bg-white shadow-sm"></div>
+                <div class="bg-amber-50/60 p-6 rounded-2xl border border-amber-200 shadow-inner"><label class="block font-black text-amber-900 mb-3 tracking-wide text-sm"><i class="fas fa-barcode mr-2 text-amber-600"></i>สแกนบาร์โค้ด / QR Code</label><input type="text" id="iss-s" onkeydown="window.issScan(event)" placeholder="ยิงสแกน..." class="w-full border-2 border-amber-300 rounded-xl p-3.5 font-mono outline-none focus:border-amber-600 focus:ring-4 focus:ring-amber-100 bg-white shadow-sm"></div>
                 <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner"><label class="block font-black text-slate-700 mb-3 tracking-wide text-sm"><i class="fas fa-search mr-2 text-slate-400"></i>เลือกด้วยมือ</label><div class="flex gap-2"><input type="text" id="iss-man" list="iss-dl" class="w-full border-2 border-slate-300 rounded-xl p-3.5 outline-none focus:border-slate-500 bg-white shadow-sm font-medium" placeholder="พิมพ์ชื่อ..."><datalist id="iss-dl">${window.DB.products.filter(p=>p.stock>0).map(p=>`<option value="${p.id}">${p.name} (เหลือ ${p.stock})</option>`).join('')}</datalist><button onclick="window.issManual()" class="bg-slate-800 text-white px-5 rounded-xl hover:bg-slate-900 shadow-md hover-lift"><i class="fas fa-plus"></i></button></div></div>
               </div>
             </div>
@@ -740,6 +828,7 @@
           </tbody></table></div>
         `;
       } else if (t === 'job') {
+        // Job Costing Logic
         const jobCosts = {};
         db.transactions.filter(tx => tx.type === 'OUT').forEach(tx => {
           const ref = tx.referenceNo || 'ไม่ระบุอ้างอิง';
@@ -905,11 +994,6 @@
           </div>
         </div>
       `;
-    }
-    
-    function htmlToast() {
-      if(!state.toast) return '';
-      return ''; // จัดการผ่าน element DOM เดิม
     }
 
   </script>
