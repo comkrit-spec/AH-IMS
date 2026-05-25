@@ -10,7 +10,7 @@
   
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap');
-    body { background-color: #f8fafc; font-family: 'Prompt', sans-serif; overflow: hidden; }
+    body { background-color: #f1f5f9; font-family: 'Prompt', sans-serif; overflow: hidden; }
     .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -30,7 +30,7 @@
     }
   </style>
 </head>
-<body class="text-slate-800">
+<body class="text-slate-800 h-screen overflow-hidden">
   
   <div id="root" class="h-full w-full"></div>
 
@@ -159,7 +159,7 @@
 
       const perms = getPerms();
       return `
-        <div class="flex h-screen w-full bg-slate-50 overflow-hidden print-hidden">
+        <div class="flex h-screen w-full bg-slate-100 overflow-hidden print-hidden">
           ${htmlSyncStatus()}
           ${htmlSidebar(perms)}
           <div class="flex-1 flex flex-col h-full relative w-full overflow-hidden">
@@ -175,10 +175,15 @@
       `;
     }
 
+    // ---------------------------------------------------------
+    // SYSTEM VIEWS
+    // ---------------------------------------------------------
     function htmlSetup() {
-      return `<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4"><div class="glass-panel p-10 rounded-3xl shadow-2xl w-full max-w-lg text-center animate-in zoom-in-95"><div class="bg-gradient-to-br from-emerald-400 to-emerald-600 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"><i class="fas fa-cloud text-4xl text-white"></i></div><h1 class="text-3xl font-black mb-2 text-slate-800">เชื่อมต่อคลาวด์</h1><p class="text-slate-500 text-sm mb-6 font-medium">วาง URL จาก Google Apps Script (แนะนำใช้ Gmail ส่วนตัว)</p><input type="text" id="setup-url" class="w-full p-4 border border-slate-200 rounded-xl outline-none font-mono text-sm bg-white/50 mb-6 focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="https://script.google.com/.../exec"><button onclick="window.saveUrl(document.getElementById('setup-url').value)" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-emerald-700 active:scale-95 transition-all">เริ่มต้นใช้งาน</button></div></div>`;
+      return `<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4"><div class="glass-panel p-10 rounded-3xl shadow-2xl w-full max-w-lg text-center animate-in zoom-in-95"><div class="bg-gradient-to-br from-emerald-400 to-emerald-600 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"><i class="fas fa-cloud text-4xl text-white"></i></div><h1 class="text-3xl font-black mb-2 text-slate-800">เชื่อมต่อคลาวด์</h1><p class="text-slate-500 text-sm mb-6 font-medium">วาง URL จาก Google Apps Script (แนะนำใช้ Gmail ส่วนตัว)</p><input type="text" id="setup-url" class="w-full p-4 border border-slate-200 rounded-xl outline-none font-mono text-sm bg-white/50 mb-6 focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="https://script.google.com/.../exec"><button onclick="window.saveUrl(document.getElementById('setup-url').value)" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-lg shadow-[0_4px_14px_0_rgba(5,150,105,0.39)] hover:bg-emerald-700 active:scale-95 transition-all">เริ่มต้นใช้งาน</button></div></div>`;
     }
-    function htmlLoading() { return `<div class="h-screen flex flex-col items-center justify-center bg-slate-50"><i class="fas fa-circle-notch fa-spin text-blue-600 text-6xl mb-6"></i><h2 class="text-2xl font-black text-slate-700 tracking-wide">กำลังดึงข้อมูล...</h2></div>`; }
+    
+    function htmlLoading() { return `<div class="h-screen flex flex-col items-center justify-center bg-slate-50"><i class="fas fa-circle-notch fa-spin text-blue-600 text-6xl mb-6"></i><h2 class="text-2xl font-black text-slate-700 tracking-wide">กำลังเชื่อมต่อข้อมูล...</h2></div>`; }
+    
     function htmlLogin() {
       return `<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4 relative overflow-hidden"><div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div><div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div><div class="glass-panel p-8 md:p-10 rounded-[2rem] shadow-2xl w-full max-w-md animate-in slide-in-from-bottom-8 duration-500 relative z-10 border border-white/60"><div class="text-center mb-10"><div class="bg-gradient-to-br from-blue-600 to-indigo-700 w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-300"><i class="fas fa-layer-group text-white text-4xl"></i></div><h1 class="text-3xl font-black text-slate-800 tracking-tighter">ASIA HYDRO</h1><p class="text-slate-500 text-sm mt-2 font-medium">Smart Procurement & Inventory</p></div><form onsubmit="window.doLogin(event)" class="space-y-6"><div><div class="relative"><i class="fas fa-user absolute left-5 top-[18px] text-slate-400"></i><input type="text" id="login-u" class="w-full pl-12 pr-4 py-4 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 bg-white/50 shadow-inner font-bold text-slate-700" placeholder="Username" required></div></div><div><div class="relative"><i class="fas fa-lock absolute left-5 top-[18px] text-slate-400"></i><input type="password" id="login-p" class="w-full pl-12 pr-4 py-4 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 bg-white/50 shadow-inner font-bold text-slate-700" placeholder="Password" required></div></div><button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:shadow-blue-500/30 hover:bg-blue-700 transition-all hover-lift active:scale-95">เข้าสู่ระบบ</button></form></div></div>`;
     }
@@ -190,12 +195,14 @@
         </div>
       `;
     }
+
     function htmlHeader() {
       let tName = state.tab === 'gr' ? 'รับเข้าสต๊อก (GR)' : state.tab === 'issue' ? 'เบิกจ่าย (Issue)' : state.tab === 'pr' ? 'ใบขอซื้อ (PR)' : state.tab === 'po' ? 'ใบสั่งซื้อ (PO)' : state.tab === 'stock' ? 'สินค้าคงคลัง' : state.tab === 'history' ? 'ประวัติความเคลื่อนไหว' : state.tab === 'reports' ? 'ระบบรายงาน' : state.tab === 'settings' ? 'ตั้งค่าระบบ' : 'แดชบอร์ด';
       return `<header class="bg-white/90 backdrop-blur-lg border-b border-slate-200 h-20 flex items-center justify-between px-4 md:px-8 shrink-0 z-30 sticky top-0"><div class="flex items-center"><button onclick="window.state.sidebar=true; window.updateUI()" class="md:hidden mr-4 bg-slate-100 p-2.5 rounded-xl hover:bg-slate-200 transition-colors"><i class="fas fa-bars text-slate-700"></i></button><h2 class="font-black text-slate-800 text-xl md:text-2xl">${tName}</h2></div><button onclick="window.print()" class="hidden md:flex text-sm font-bold bg-white border border-slate-200 text-slate-600 px-5 py-2.5 rounded-xl shadow-sm hover:bg-slate-50 transition-colors hover-lift items-center"><i class="fas fa-print mr-2 text-blue-500"></i>พิมพ์หน้าจอ</button></header>`;
     }
+
     function htmlSidebar(p) {
-      const btn = (id, icon, txt, badge='') => `<button onclick="window.changeTab('${id}')" class="w-full flex items-center space-x-3 px-5 py-4 rounded-2xl text-sm font-bold transition-all duration-200 ${state.tab===id?'bg-blue-600 text-white shadow-lg shadow-blue-600/30':'text-slate-400 hover:bg-slate-800 hover:text-white'}"><i class="fas ${icon} w-6 text-center text-lg"></i><span>${txt}</span>${badge}</button>`;
+      const btn = (id, icon, txt, badge='') => `<button onclick="window.changeTab('${id}')" class="w-full flex items-center space-x-3 px-5 py-4 rounded-2xl text-sm font-bold transition-all duration-200 ${state.tab===id?'bg-blue-600 text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)]':'text-slate-400 hover:bg-slate-800 hover:text-white'}"><i class="fas ${icon} w-6 text-center text-lg"></i><span>${txt}</span>${badge}</button>`;
       const head = txt => `<div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-8 mb-3 ml-3">${txt}</div>`;
       const poWait = window.DB.pos.filter(x=>x.status==='Pending Receipt').length;
       const bPo = poWait > 0 ? `<span class="bg-red-500 text-white text-[11px] px-2.5 py-0.5 rounded-full ml-auto shadow-sm">${poWait}</span>` : '';
@@ -209,13 +216,16 @@
             ${p.pr ? head('ระบบจัดซื้อ') + btn('pr','fa-file-invoice','ใบขอซื้อ (PR)') + (p.po ? btn('po','fa-shopping-cart','ใบสั่งซื้อ (PO)') : '') : ''}
             ${p.inv ? head('คลังสินค้า') + btn('gr','fa-truck-loading','รับเข้า (GR)', bPo) + btn('issue','fa-dolly','เบิกจ่าย (Issue)') + btn('stock','fa-cubes','สต๊อกสินค้า') + btn('history','fa-clipboard-list','ประวัติเคลื่อนไหว') : ''}
             ${p.rep ? head('วิเคราะห์ข้อมูล') + btn('reports','fa-chart-line','รายงาน (Reports)') : ''}
-            ${p.set ? head('ตั้งค่าระบบ') + btn('settings','fa-cog','จัดการระบบ') : ''}
+            ${p.set ? head('ผู้ดูแลระบบ') + btn('settings','fa-cog','ตั้งค่าระบบ') : ''}
           </div>
           <div class="p-5 border-t border-slate-800/50 mt-auto bg-slate-900/80 flex justify-between items-center"><div class="flex items-center space-x-3"><div class="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center font-black text-xl text-blue-400 border border-slate-700 shadow-inner">${window.USER.name.charAt(0)}</div><div class="truncate"><p class="font-bold text-sm text-white">${window.USER.name}</p><p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">${window.USER.role}</p></div></div><button onclick="window.doLogout()" class="text-slate-500 hover:text-red-400 p-3 rounded-xl hover:bg-slate-800 transition-colors"><i class="fas fa-power-off text-xl"></i></button></div>
         </nav>
       `;
     }
 
+    // ---------------------------------------------------------
+    // TAB COMPONENTS
+    // ---------------------------------------------------------
     function htmlActiveTab(p) {
       const t = state.tab;
       if(t==='dashboard') return viewDashboard(p);
@@ -230,14 +240,14 @@
       return '';
     }
 
-    // --- VIEWS ---
+    // 🌟 DASHBOARD
     function viewDashboard(p) {
       const prods = window.DB.products; const txns = window.DB.transactions;
       const hStk = prods.filter(x=>x.stock>x.minStock).length; const lStk = prods.filter(x=>x.stock>0 && x.stock<=x.minStock).length; const oStk = prods.filter(x=>x.stock===0).length;
       const hPct = Math.round((hStk/prods.length)*100)||0; const lPct = Math.round((lStk/prods.length)*100)||0; const oPct = Math.round((oStk/prods.length)*100)||0;
       
       let acts = '';
-      if(p.pr) acts+=`<button onclick="window.state.tab='pr'; window.state.pr.view='create'; window.updateUI()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 px-5 py-2.5 rounded-xl font-bold flex items-center transition-all hover-lift"><i class="fas fa-plus mr-2"></i>สร้าง PR</button>`;
+      if(p.pr) acts+=`<button onclick="window.state.tab='pr'; window.state.pr.view='create'; window.updateUI()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 px-5 py-3 rounded-xl font-bold flex items-center transition-all hover-lift"><i class="fas fa-plus mr-2"></i>สร้าง PR</button>`;
       if(p.inv) acts+=`<button onclick="window.changeTab('gr')" class="bg-emerald-500/90 hover:bg-emerald-400 backdrop-blur-sm px-5 py-2.5 rounded-xl font-bold flex items-center shadow-lg transition-all hover-lift border border-emerald-400/50"><i class="fas fa-truck-loading mr-2"></i>รับเข้า</button><button onclick="window.changeTab('issue')" class="bg-amber-500/90 hover:bg-amber-400 backdrop-blur-sm px-5 py-2.5 rounded-xl font-bold flex items-center shadow-lg transition-all hover-lift border border-amber-400/50"><i class="fas fa-dolly mr-2"></i>เบิกออก</button>`;
       
       let cards = '';
@@ -285,7 +295,7 @@
       `;
     }
 
-    // --- PR VIEW ---
+    // 🌟 PR VIEW
     window.addPrCart = () => {
       const s = window.state.pr;
       if((!s.isCustom && !s.productId) || (s.isCustom && !s.customName) || !s.qty) return window.showAlert('ผิดพลาด','ระบุสินค้าและจำนวนให้ครบ','error');
@@ -356,18 +366,18 @@
         if(pr.status==='Pending' || pr.status==='Rejected') acts += `<button onclick="window.actPr('${pr.id}','del')" class="text-slate-400 hover:text-red-500 ml-3 p-2 text-lg hover-lift"><i class="fas fa-trash"></i></button>`;
         const badge = pr.status==='Approved'?'bg-emerald-100 text-emerald-700':pr.status==='Rejected'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700';
         const txt = pr.status==='Approved'?'อนุมัติแล้ว':pr.status==='Rejected'?'ไม่อนุมัติ':'รอพิจารณา';
-        return `<tr class="hover:bg-slate-50 transition-colors"><td class="p-5 font-black text-blue-600 text-base">${pr.id}</td><td class="p-5 text-sm font-medium text-slate-500">${pr.date}</td><td class="p-5 font-bold text-slate-700">${pr.requester}</td><td class="p-5 text-sm font-black text-slate-600">${pr.items.length} รายการ</td><td class="p-5 text-center"><span class="px-4 py-1.5 rounded-full text-[11px] font-black tracking-wider uppercase inline-block w-28 ${badge}">${txt}</span></td><td class="p-5 text-center print-hidden">${acts}</td></tr>`;
+        return `<tr class="hover:bg-slate-50 transition-colors"><td class="p-5 font-black text-blue-600 text-base">${pr.id}</td><td class="p-5 text-sm font-medium text-slate-500">${pr.date}</td><td class="p-5 font-bold text-slate-700">${pr.requester}</td><td class="p-5 text-sm font-black text-slate-600">${pr.items.length} รายการ</td><td class="p-5 text-center"><span class="px-4 py-1.5 rounded-full text-xs font-black tracking-wider uppercase inline-block w-28 ${badge}">${txt}</span></td><td class="p-5 text-center print-hidden">${acts}</td></tr>`;
       }).join('');
 
       return `
         <div class="space-y-6">
-          <div class="flex flex-col md:flex-row justify-between md:items-center gap-4"><h2 class="text-3xl font-black tracking-tight text-slate-800">ใบขอซื้อ (PR)</h2><div class="flex gap-3"><div class="relative"><input type="text" id="pr-search" placeholder="ค้นหา PR..." value="${s.search}" oninput="window.state.pr.search=this.value; window.updateUI()" class="pl-12 pr-4 py-3.5 border-none bg-white shadow-sm rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-72 font-medium"><i class="fas fa-search absolute left-5 top-4 text-slate-400"></i></div>${p.pr ? `<button onclick="window.state.pr.view='create'; window.updateUI()" class="bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-bold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover-lift whitespace-nowrap"><i class="fas fa-plus mr-2"></i> สร้าง PR</button>` : ''}</div></div>
+          <div class="flex flex-col md:flex-row justify-between md:items-center gap-4"><h2 class="text-3xl font-black tracking-tight text-slate-800">ใบขอซื้อ (PR)</h2><div class="flex gap-3"><div class="relative"><input type="text" id="pr-search" placeholder="ค้นหา PR..." value="${s.search}" oninput="window.state.pr.search=this.value; window.updateUI()" class="pl-12 pr-4 py-3 border-none bg-white shadow-sm rounded-xl outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-72 font-medium"><i class="fas fa-search absolute left-5 top-4 text-slate-400"></i></div>${p.pr ? `<button onclick="window.state.pr.view='create'; window.updateUI()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover-lift whitespace-nowrap"><i class="fas fa-plus mr-2"></i> สร้าง PR</button>` : ''}</div></div>
           <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-x-auto"><table class="w-full text-left min-w-[900px]"><thead class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400"><tr><th class="p-5 font-black">เลขที่ PR</th><th class="p-5 font-black">วันที่</th><th class="p-5 font-black">ผู้ขอซื้อ</th><th class="p-5 font-black">รายการ</th><th class="p-5 font-black text-center">สถานะ</th><th class="p-5 font-black text-center print-hidden">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">${trs||`<tr><td colspan="6" class="p-16 text-center"><i class="fas fa-file-invoice text-4xl text-slate-200 mb-4 block"></i><span class="font-bold text-slate-400">ไม่พบเอกสาร PR</span></td></tr>`}</tbody></table></div>
         </div>
       `;
     }
 
-    // --- PO VIEW ---
+    // 🌟 PO VIEW
     window.savePo = () => {
       const s = state.po;
       if(!s.prId || !s.vendorId) return window.showAlert('ผิดพลาด', 'เลือก PR และ ร้านค้า', 'error');
@@ -429,18 +439,18 @@
       const trs = list.map(po => {
         const v = window.DB.vendors.find(y=>y.id===po.vendorId);
         const b = po.status==='Completed'?'bg-emerald-100 text-emerald-700':'bg-blue-100 text-blue-700';
-        return `<tr class="hover:bg-slate-50 transition-colors"><td class="p-5 font-black text-indigo-600 text-base">${po.id}</td><td class="p-5 text-sm font-bold text-slate-500">${po.prId}</td><td class="p-5 font-bold text-slate-800">${v?.name||''}</td><td class="p-5 text-center text-sm font-medium text-slate-500">${po.date}</td><td class="p-5 text-center"><span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider inline-block w-28 ${b}">${po.status==='Completed'?'รับครบแล้ว':'รอรับของ'}</span></td><td class="p-5 text-center print-hidden">${po.status==='Pending Receipt'?`<button onclick="window.delPo('${po.id}')" class="text-red-500 bg-white border border-red-200 hover:bg-red-50 px-4 py-1.5 rounded-lg text-xs font-bold hover-lift shadow-sm">ยกเลิก PO</button>`:''}</td></tr>`;
+        return `<tr class="hover:bg-slate-50 transition-colors"><td class="p-5 font-black text-indigo-600 text-base">${po.id}</td><td class="p-5 text-sm font-bold text-slate-500">${po.prId}</td><td class="p-5 font-bold text-slate-800">${v?.name||''}</td><td class="p-5 text-center text-sm font-medium text-slate-500">${po.date}</td><td class="p-5 text-center"><span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider inline-block w-28 ${b}">${po.status==='Completed'?'รับครบแล้ว':'รอรับของ'}</span></td><td class="p-5 text-center print-hidden">${po.status==='Pending Receipt'?`<button onclick="window.delPo('${po.id}')" class="text-red-500 bg-white border border-red-200 hover:bg-red-50 px-4 py-1.5 rounded-lg text-xs font-bold hover-lift shadow-sm">ยกเลิก PO</button>`:''}</td></tr>`;
       }).join('');
 
       return `
         <div class="space-y-6">
-          <div class="flex flex-col md:flex-row justify-between md:items-center gap-4"><h2 class="text-3xl font-black tracking-tight text-slate-800">ใบสั่งซื้อ (PO)</h2><div class="flex gap-3"><div class="relative"><input type="text" placeholder="ค้นหา PO..." value="${s.search}" oninput="window.state.po.search=this.value; window.updateUI()" class="pl-12 pr-4 py-3.5 border-none shadow-sm bg-white rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-72 font-medium"><i class="fas fa-search absolute left-5 top-4 text-slate-400"></i></div><button onclick="window.state.po.view='create'; window.updateUI()" class="bg-indigo-600 text-white px-6 py-3.5 rounded-2xl font-bold shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover-lift whitespace-nowrap"><i class="fas fa-plus mr-2"></i> สร้าง PO</button></div></div>
+          <div class="flex flex-col md:flex-row justify-between md:items-center gap-4"><h2 class="text-3xl font-black tracking-tight text-slate-800">ใบสั่งซื้อ (PO)</h2><div class="flex gap-3"><div class="relative"><input type="text" placeholder="ค้นหา PO..." value="${s.search}" oninput="window.state.po.search=this.value; window.updateUI()" class="pl-12 pr-4 py-3 border-none shadow-sm bg-white rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-72 font-medium"><i class="fas fa-search absolute left-5 top-4 text-slate-400"></i></div><button onclick="window.state.po.view='create'; window.updateUI()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover-lift whitespace-nowrap"><i class="fas fa-plus mr-2"></i> สร้าง PO</button></div></div>
           <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-x-auto"><table class="w-full text-left min-w-[900px]"><thead class="bg-slate-50/50 border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400"><tr><th class="p-5 font-black">เลขที่ PO</th><th class="p-5 font-black">อ้างอิง PR</th><th class="p-5 font-black">ซัพพลายเออร์</th><th class="p-5 font-black text-center">วันที่สั่ง</th><th class="p-5 font-black text-center">สถานะ</th><th class="p-5 font-black text-center print-hidden">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">${trs||`<tr><td colspan="6" class="p-16 text-center"><i class="fas fa-shopping-cart text-4xl text-slate-200 mb-4 block"></i><span class="font-bold text-slate-400">ไม่พบเอกสาร PO</span></td></tr>`}</tbody></table></div>
         </div>
       `;
     }
 
-    // --- GR VIEW ---
+    // 🌟 GR VIEW
     window.grHandleScan = (e) => {
       if(e.key === 'Enter') {
         const v = e.target.value.trim(); e.target.value = '';
@@ -541,7 +551,7 @@
       }).join('');
 
       return `
-        <h2 class="text-3xl font-black tracking-tight mb-8">รับสินค้าเข้าสต๊อก (Goods Receipt)</h2>
+        <h2 class="text-3xl font-black tracking-tight mb-8">รับสินค้าเข้า (Goods Receipt)</h2>
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in slide-in-from-bottom-4">
           <div class="xl:col-span-2 space-y-6">
             <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm print-hidden"><label class="block font-black text-slate-800 mb-4 tracking-wide"><i class="fas fa-barcode mr-2 text-blue-500"></i> สแกนบาร์โค้ด / QR Code</label><div class="relative"><input type="text" id="gr-scan" onkeydown="window.grHandleScan(event)" placeholder="ยิงสแกนแล้วกด Enter..." class="w-full pl-14 p-5 text-xl font-mono border-2 border-blue-100 bg-blue-50/30 rounded-2xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 shadow-inner transition-all" autofocus><i class="fas fa-qrcode absolute left-5 top-[22px] text-2xl text-blue-300"></i></div></div>
@@ -558,7 +568,7 @@
       `;
     }
 
-    // 6.6 ISSUE VIEW
+    // 🌟 ISSUE VIEW
     window.issScan = (e) => {
       if(e.key === 'Enter') {
         const v = e.target.value.trim(); e.target.value = ''; if(!v) return;
@@ -629,7 +639,7 @@
       `;
     }
 
-    // 6.7 STOCK
+    // 🌟 STOCK
     window.stkToggleAll = (chk, idsStr) => { state.stk.selected = chk ? JSON.parse(idsStr) : []; updateUI(); };
     window.stkToggle = (id) => { if(state.stk.selected.includes(id)) state.stk.selected = state.stk.selected.filter(x=>x!==id); else state.stk.selected.push(id); updateUI(); };
     window.stkDel = (id) => { window.showConfirm('ลบสินค้า','ลบออกจากระบบอย่างถาวร?',()=>{ window.DB.products=window.DB.products.filter(p=>p.id!==id); window.saveDB(); window.showToast('ลบสำเร็จ'); }); };
@@ -770,7 +780,7 @@
       `;
     }
 
-    // 6.8 HISTORY
+    // 🌟 HISTORY
     window.hisExport = () => {
       let csv = 'Date,Type,Product ID,Product Name,Qty,Reference\n';
       window.DB.transactions.forEach(t => {
@@ -803,7 +813,7 @@
       `;
     }
 
-    // 6.9 REPORTS
+    // 🌟 REPORTS
     function viewReports() {
       const t = state.rep.type;
       const db = window.DB;
@@ -868,7 +878,7 @@
       `;
     }
 
-    // 6.10 SETTINGS
+    // 🌟 SETTINGS
     window.openSetModal = (type, id='') => {
       let d;
       if(type === 'user') {
@@ -932,6 +942,56 @@
       `;
     }
 
+    // Modal สินค้า (รองรับอัปโหลดรูป Base64 อัตโนมัติ)
+    window.openProdModal = (id='') => {
+      let d;
+      if(id) {
+        const p = window.DB.products.find(x=>x.id===id);
+        d = { isEdit:true, id:p.id, barcode:p.barcode||'', name:p.name, cat:p.category||'', loc:p.location||'', unit:p.unit, price:p.price, stock:p.stock, min:p.minStock, img:p.image||'' };
+      } else {
+        d = { isEdit:false, id:`P00${window.DB.products.length+1}`, barcode:'', name:'', cat:'', loc:'', unit:'ชิ้น', price:0, stock:0, min:10, img:'' };
+      }
+      window.state.modal = { type: 'prod', data: d };
+      window.updateUI();
+    };
+
+    window.handleImageUpload = (event) => {
+      const file = event.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // บีบอัดรูปก่อนเซฟ (ให้ไม่เกิน 400px และลด quality เหลือ 0.7) เพื่อให้เซฟลง Google Sheets ได้สบาย
+          const canvas = document.createElement('canvas');
+          const MAX_W = 400; const MAX_H = 400;
+          let w = img.width; let h = img.height;
+          if (w > h) { if (w > MAX_W) { h *= MAX_W / w; w = MAX_W; } } 
+          else { if (h > MAX_H) { w *= MAX_H / h; h = MAX_H; } }
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Base64 Compressed
+          
+          window.state.modal.data.img = dataUrl;
+          window.updateUI();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.saveProdModal = () => {
+      const m = window.state.modal.data;
+      if(!m.id || !m.name) return window.showAlert('ผิดพลาด', 'กรอกรหัสและชื่อ', 'error');
+      const obj = { id:m.id, barcode:m.barcode, name:m.name, category:m.cat, location:m.loc, unit:m.unit, price:Number(m.price), stock:Number(m.stock), minStock:Number(m.min), image:m.img };
+      
+      if(m.isEdit) window.DB.products = window.DB.products.map(p=>p.id===m.id ? obj : p);
+      else { if(window.DB.products.find(p=>p.id===m.id)) return window.showAlert('ผิดพลาด', 'รหัสซ้ำ', 'error'); window.DB.products.unshift(obj); }
+      
+      window.saveDB(); window.state.modal=null; window.showToast('บันทึกสำเร็จ');
+    };
+
     function htmlModals() {
       if(!state.modal || !state.modal.type) return '';
       const m = state.modal.data;
@@ -994,6 +1054,53 @@
           </div>
         </div>
       `;
+    }
+
+    // 🌟 CUSTOM DIALOG
+    function htmlToast() {
+      if(!state.toast) return '';
+      const bg = state.toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+      const icon = state.toast.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+      return `
+        <div class="fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl text-white text-sm font-bold z-[400] flex items-center animate-slide-up ${bg}">
+          <i class="fas ${icon} mr-3 text-2xl"></i><span>${state.toast.msg}</span>
+        </div>
+      `;
+    }
+
+    function htmlModalsPopup() {
+      // สำหรับ Dialog (แจ้งเตือน / ยืนยัน)
+      if (!state.dialog) return '';
+      const d = state.dialog;
+      const isConf = d.type === 'confirm';
+      const isErr = d.type === 'error';
+      const bgBtn = isErr ? 'bg-red-600 hover:bg-red-700 shadow-red-600/30' : isConf ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/30';
+      const colorTxt = isErr ? 'text-red-600' : isConf ? 'text-amber-600' : 'text-blue-600';
+      const icon = isErr ? 'fa-exclamation-triangle text-red-500' : isConf ? 'fa-question-circle text-amber-500' : 'fa-info-circle text-blue-500';
+
+      return `
+        <div class="fixed inset-0 bg-slate-900/60 z-[400] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 border border-white/20">
+            <div class="p-8 text-center">
+              <div class="flex justify-center mb-6 bg-slate-50 rounded-[1.5rem] w-20 h-20 items-center mx-auto border border-slate-100 shadow-inner">
+                <i class="fas ${icon} text-4xl"></i>
+              </div>
+              <h3 class="text-2xl font-black mb-3 ${colorTxt} tracking-tight">${d.title}</h3>
+              <p class="text-slate-500 font-medium whitespace-pre-wrap leading-relaxed">${d.msg}</p>
+            </div>
+            <div class="px-8 py-5 bg-slate-50/50 flex gap-3 justify-end border-t border-slate-100">
+              ${isConf ? `<button onclick="window.closeDialog()" class="px-5 py-3 w-full rounded-xl text-slate-600 bg-white border border-slate-200 font-bold hover:bg-slate-50 transition-colors">ยกเลิก</button>` : ''}
+              <button onclick="window.execConfirm()" class="px-5 py-3 w-full rounded-xl text-white font-black shadow-lg hover-lift transition-colors tracking-wide ${bgBtn}">ตกลง</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // รวม Modals ทั้งหมด
+    const originalHtmlModals = htmlModals;
+    htmlModals = () => {
+      return originalHtmlModals() + htmlModalsPopup();
     }
 
   </script>
